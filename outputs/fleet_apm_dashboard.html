@@ -1,0 +1,3299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>City of Cincinnati Fleet APM Dashboard</title>
+  <style>
+    :root {
+      --app-bg: #f4f4f4;
+      --surface: #ffffff;
+      --surface-2: #f8f8f8;
+      --nav: #161616;
+      --nav-2: #262626;
+      --text: #161616;
+      --muted: #6f6f6f;
+      --line: #e0e0e0;
+      --line-2: #c6c6c6;
+      --blue: #0f62fe;
+      --blue-soft: #edf5ff;
+      --green: #198038;
+      --yellow: #f1c21b;
+      --red: #da1e28;
+      --teal: #007d79;
+      --purple: #8a3ffc;
+      --bar: #78aee0;
+      --shadow: 0 8px 28px rgba(0,0,0,.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--app-bg);
+      color: var(--text);
+      font: 14px/1.45 "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+      transition: grid-template-columns .18s ease;
+    }
+
+    .app.nav-collapsed {
+      grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .side {
+      background: var(--nav);
+      color: #f4f4f4;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 100vh;
+      position: sticky;
+      top: 0;
+    }
+
+    .brand {
+      height: 78px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 10px;
+      background: var(--nav);
+      border-bottom: 1px solid #393939;
+    }
+
+    .brand-logo {
+      max-width: 210px;
+      max-height: 60px;
+      display: block;
+    }
+
+    .brand-link {
+      display: block;
+      line-height: 0;
+    }
+
+    .nav-toggle {
+      width: 100%;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      color: #c6c6c6;
+      border-bottom: 1px solid #393939;
+    }
+
+    .nav-toggle:hover, .nav-item:hover {
+      background: var(--nav-2);
+      color: #fff;
+    }
+
+    .nav {
+      padding-top: 8px;
+    }
+
+    .nav-item {
+      width: 100%;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      color: #c6c6c6;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item.active {
+      color: #fff;
+      border-left-color: var(--blue);
+      background: #262626;
+    }
+
+    .nav-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 16px;
+      flex: 0 0 18px;
+    }
+
+    .app.nav-collapsed .nav-label,
+    .app.nav-collapsed .side-status {
+      display: none;
+    }
+
+    .app.nav-collapsed .brand {
+      padding: 8px;
+    }
+
+    .app.nav-collapsed .brand-logo {
+      max-width: 32px;
+      object-fit: cover;
+      object-position: left center;
+    }
+
+    .side-status {
+      color: #a8a8a8;
+      padding: 12px 14px;
+      font-size: 12px;
+      border-top: 1px solid #393939;
+    }
+
+    .content {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+    }
+
+    .topbar {
+      min-height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 0 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .dashboard-title {
+      display: inline-grid;
+      grid-template-columns: auto auto;
+      grid-template-rows: auto auto;
+      column-gap: 16px;
+      align-items: end;
+      color: #003057;
+      font-family: "Proxima Nova Wide", "Proxima Nova", "Montserrat", "Arial", sans-serif;
+      line-height: 1;
+    }
+
+    .title-citymark {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      display: grid;
+      grid-template-columns: auto;
+      grid-template-rows: auto auto;
+      align-items: end;
+    }
+
+    .title-cityof {
+      grid-column: 1;
+      grid-row: 1;
+      justify-self: end;
+      font-size: 15px;
+      font-weight: 400;
+      line-height: .85;
+      text-transform: lowercase;
+    }
+
+    .title-cincinnati {
+      grid-column: 1;
+      grid-row: 2;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .title-rest {
+      grid-column: 2;
+      grid-row: 2;
+      align-self: end;
+      font-size: 24px;
+      font-weight: 400;
+      color: #003057;
+      padding-bottom: 1px;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
+    }
+
+    .filter-strip {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 24px;
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(6, minmax(112px, 1fr));
+      align-items: end;
+    }
+
+    .year-range {
+      display: flex;
+      align-items: stretch;
+      border-left: 4px solid var(--red);
+      background: var(--surface);
+      height: 38px;
+      box-shadow: inset 0 -1px 0 var(--line);
+    }
+
+    .year-title {
+      padding: 0 10px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .year-chip {
+      min-width: 40px;
+      padding: 0 8px;
+      color: var(--muted);
+      border-left: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .year-chip.active {
+      color: var(--text);
+      background: #fff;
+      box-shadow: inset 0 -3px 0 var(--blue);
+    }
+
+    .filter {
+      position: relative;
+      min-width: 0;
+    }
+
+    .filter-label {
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+    }
+
+    .filter-button {
+      width: 100%;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line-2);
+      padding: 6px 8px;
+      color: var(--text);
+      text-align: left;
+    }
+
+    .filter-button span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .filter-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 20;
+      width: min(320px, 86vw);
+      background: var(--surface);
+      border: 1px solid var(--line-2);
+      box-shadow: var(--shadow);
+      padding: 10px;
+    }
+
+    .filter.open .filter-popover {
+      display: block;
+    }
+
+    .filter-search {
+      width: 100%;
+      height: 32px;
+      border: 1px solid var(--line-2);
+      padding: 5px 8px;
+      margin-bottom: 8px;
+    }
+
+    .filter-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .select-all-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 2px 9px;
+      margin-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .link-button {
+      color: var(--blue);
+      font-size: 12px;
+      padding: 0;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 2px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .option {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 4px 2px;
+      font-size: 13px;
+    }
+
+    .workspace {
+      padding: 16px 24px 24px;
+      min-width: 0;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: grid;
+      gap: 16px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(170px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+
+    .kpi {
+      min-height: 128px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .kpi-title {
+      font-weight: 600;
+      margin-right: 24px;
+      display: inline-block;
+      position: relative;
+      cursor: help;
+    }
+
+    .name-tip {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: 24px;
+      width: 310px;
+      padding: 10px;
+      background: #262626;
+      color: #f4f4f4;
+      box-shadow: var(--shadow);
+      z-index: 32;
+      font-size: 12px;
+      line-height: 1.4;
+      font-weight: 400;
+    }
+
+    .kpi-title:hover .name-tip,
+    .kpi-title:focus .name-tip {
+      display: block;
+    }
+
+    .kpi-state {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .kpi-value {
+      margin-top: 4px;
+      font-size: 34px;
+      font-weight: 300;
+      letter-spacing: 0;
+    }
+
+    .kpi-split {
+      display: grid;
+      grid-template-columns: 1fr 1px 1fr;
+      gap: 12px;
+      align-items: stretch;
+      margin-top: 12px;
+    }
+
+    .kpi-divider {
+      width: 1px;
+      background: var(--line);
+    }
+
+    .kpi-sub-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .kpi-sub-value {
+      margin-top: 2px;
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: 0;
+    }
+
+    .kpi-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .info {
+      position: absolute;
+      top: 14px;
+      right: 12px;
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 700;
+      cursor: help;
+    }
+
+    .tip {
+      display: none;
+      position: absolute;
+      top: 24px;
+      right: 0;
+      width: 270px;
+      padding: 10px;
+      color: #f4f4f4;
+      background: #262626;
+      box-shadow: var(--shadow);
+      z-index: 30;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .info:hover .tip, .info:focus .tip {
+      display: block;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .chart-card {
+      min-height: 380px;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .chart-card.expanded {
+      position: fixed;
+      inset: 18px;
+      z-index: 50;
+      min-height: auto;
+      overflow: auto;
+      box-shadow: 0 18px 60px rgba(0,0,0,.28);
+    }
+
+    .chart-card.expanded svg {
+      min-height: 560px;
+    }
+
+    .chart-card.large {
+      min-height: calc(100vh - 150px);
+    }
+
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .chart-filter {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      min-width: 150px;
+    }
+
+    .chart-filter select {
+      min-height: 34px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      color: var(--text);
+      padding: 6px 8px;
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chart-sub {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .icon-row {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .icon-button {
+      width: 32px;
+      height: 32px;
+      border: 1px solid transparent;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      color: #525252;
+    }
+
+    .icon-button:hover {
+      border-color: var(--line-2);
+      background: var(--surface-2);
+    }
+
+    .icon-button:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+    }
+
+    .breakdown-controls {
+      display: flex;
+      gap: 12px;
+      align-items: end;
+      justify-content: flex-end;
+      min-width: 220px;
+    }
+
+    .control-label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      width: 220px;
+    }
+
+    .cost-filter {
+      position: relative;
+      width: 240px;
+    }
+
+    .cost-popover {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      z-index: 22;
+      width: 260px;
+      background: var(--surface);
+      border: 1px solid var(--line-2);
+      box-shadow: var(--shadow);
+      padding: 10px;
+    }
+
+    .cost-filter.open .cost-popover {
+      display: block;
+    }
+
+    .cost-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 2px;
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .cost-total-row {
+      padding-bottom: 9px;
+      margin-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 600;
+    }
+
+    svg {
+      width: 100%;
+      display: block;
+    }
+
+    .empty {
+      min-height: 300px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      background: #fafafa;
+      border: 1px dashed var(--line-2);
+      padding: 24px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 10px;
+      margin-top: 8px;
+    }
+
+    .manufacturer-legend {
+      max-height: 96px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    .axis-label {
+      fill: var(--muted);
+      font-size: 12px;
+    }
+
+    .bar-label {
+      fill: #525252;
+      font-size: 11px;
+    }
+
+    .bar-value {
+      fill: #525252;
+      font-size: 11px;
+    }
+
+    .advanced-note {
+      padding: 12px 14px;
+      background: #fff8e1;
+      border-left: 4px solid var(--yellow);
+      color: #3d3520;
+      font-size: 13px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .advanced-controls {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .advanced-unit-control {
+      max-width: 240px;
+    }
+
+    .advanced-controls label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .advanced-controls input,
+    .advanced-controls select {
+      min-height: 34px;
+      border: 1px solid var(--line-2);
+      background: var(--surface);
+      padding: 6px 8px;
+      color: var(--text);
+    }
+
+    .advanced-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      padding-top: 18px;
+    }
+
+    .advanced-section {
+      padding: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .advanced-section summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 12px 14px;
+      font-weight: 600;
+      border-bottom: 1px solid transparent;
+    }
+
+    .advanced-section summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .advanced-section summary::before {
+      content: ">";
+      display: inline-block;
+      margin-right: 8px;
+      color: var(--muted);
+      transition: transform .12s ease;
+    }
+
+    .advanced-section[open] summary {
+      border-bottom-color: var(--line);
+    }
+
+    .advanced-section[open] summary::before {
+      transform: rotate(90deg);
+    }
+
+    .advanced-section-body {
+      padding: 14px;
+    }
+
+    .advanced-meta {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 0 2px;
+    }
+
+    .advanced-cards {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .advanced-card {
+      padding: 12px;
+      min-height: 84px;
+    }
+
+    .advanced-card .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .advanced-card .value {
+      margin-top: 6px;
+      font-size: 22px;
+      font-weight: 300;
+    }
+
+    .advanced-warnings {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 2px;
+      min-height: 0;
+    }
+
+    .advanced-warnings:empty {
+      display: none;
+    }
+
+    .diagnostics-panel {
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .diagnostics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(140px, 1fr));
+      gap: 8px 16px;
+      margin-top: 8px;
+    }
+
+    .model-details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .model-details-table th,
+    .model-details-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .model-details-table th {
+      width: 38%;
+      color: var(--muted);
+      font-weight: 600;
+      background: var(--surface-2);
+    }
+
+    .model-more {
+      margin-top: 10px;
+    }
+
+    .model-more summary {
+      cursor: pointer;
+      color: var(--blue);
+      font-weight: 600;
+      font-size: 13px;
+      padding: 6px 0;
+    }
+
+    .reliability-pills {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .reliability-pill {
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      padding: 10px;
+    }
+
+    .reliability-pill strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 7px 8px;
+      text-align: left;
+    }
+
+    .comparison-table th {
+      color: var(--muted);
+      font-weight: 600;
+      background: var(--surface-2);
+    }
+
+    .comparison-table tr[data-group] {
+      cursor: pointer;
+    }
+
+    .comparison-table tr[data-group]:hover {
+      background: var(--blue-soft);
+    }
+
+    @media (max-width: 1180px) {
+      .filter-strip {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      .kpis, .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app, .app.nav-collapsed {
+        grid-template-columns: 1fr;
+      }
+      .side {
+        position: static;
+        min-height: auto;
+      }
+      .nav {
+        display: flex;
+        overflow: auto;
+      }
+      .side-status, .brand-title, .nav-toggle {
+        display: none;
+      }
+      .nav-item {
+        width: auto;
+        min-width: 52px;
+      }
+      .filter-strip, .kpis, .grid-2 {
+        grid-template-columns: 1fr;
+      }
+      .advanced-controls,
+      .advanced-cards,
+      .diagnostics-grid {
+        grid-template-columns: 1fr;
+      }
+      .topbar {
+        align-items: start;
+        flex-direction: column;
+        padding: 14px;
+      }
+      .workspace, .filter-strip {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="appShell">
+    <aside class="side">
+      <div>
+        <div class="brand">
+          <a class="brand-link" href="https://prelical.com/" target="_blank" rel="noopener noreferrer" aria-label="Open Prelical website">
+            <img class="brand-logo" src="./prelical-transparent.png" alt="Prelical Practical Reliability Solutions">
+          </a>
+        </div>
+        <button class="nav-toggle" id="navToggle" title="Collapse navigation">
+          <span class="nav-icon">☰</span><span class="nav-label">Collapse</span>
+        </button>
+        <nav class="nav">
+          <button class="nav-item active" data-tab="health" title="Asset Health">
+            <span class="nav-icon">◈</span><span class="nav-label">Asset Health</span>
+          </button>
+          <button class="nav-item" data-tab="pareto" title="Pareto Opportunity Analysis">
+            <span class="nav-icon">▥</span><span class="nav-label">Pareto Opp. Analysis</span>
+          </button>
+          <button class="nav-item" data-tab="breakdown" title="Cost Breakdown">
+            <span class="nav-icon">⌁</span><span class="nav-label">Cost Breakdown</span>
+          </button>
+          <button class="nav-item" data-tab="advanced" title="Advanced Analytics">
+            <span class="nav-icon">A</span><span class="nav-label">Advanced Analytics</span>
+          </button>
+        </nav>
+      </div>
+      <div class="side-status" id="sideStatus">Daily auto-refresh enabled.</div>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <h1 class="dashboard-title" aria-label="City of Cincinnati Fleet APM Dashboard">
+          <span class="title-citymark"><span class="title-cityof">city of</span><span class="title-cincinnati">Cincinnati</span></span>
+          <span class="title-rest">Fleet APM Dashboard</span>
+        </h1>
+        <div class="status" id="status">Loading latest data...</div>
+      </header>
+
+      <section class="filter-strip">
+        <div class="filter" data-filter="year"></div>
+        <div class="filter" data-filter="assetClass"></div>
+        <div class="filter" data-filter="department"></div>
+        <div class="filter" data-filter="manufacturer"></div>
+        <div class="filter" data-filter="model"></div>
+        <div class="filter" data-filter="assetId"></div>
+      </section>
+
+      <main class="workspace">
+        <section id="health" class="view active">
+          <div class="kpis" id="kpis"></div>
+          <div class="grid-2">
+            <div class="card chart-card" id="freqCostCard">
+              <div class="chart-head">
+                <div>
+                  <div class="chart-title">Frequency vs. Cost Matrix</div>
+                  <div class="chart-sub">Vehicles by repair count and total repair cost. <span>(<em>Unknown manufacturer</em> excluded)</span></div>
+                </div>
+                <button class="icon-button" id="freqExpand" title="Enlarge chart" aria-label="Enlarge chart">&#9974;</button>
+              </div>
+              <div id="freqCostChart"></div>
+            </div>
+            <div class="card chart-card">
+              <div class="chart-head">
+                <div>
+                  <div class="chart-title">Reason for Repair vs. Cost</div>
+                  <div class="chart-sub">Repair reasons ranked by cost impact.</div>
+                </div>
+              </div>
+              <div id="reasonChart"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pareto" class="view">
+          <div class="card chart-card large">
+            <div class="chart-head">
+              <div>
+                <div class="chart-title" id="paretoTitle">Total Cost by Asset Class</div>
+                <div class="chart-sub" id="paretoSub">Use the arrow controls to drill asset class, department, manufacturer, model, and asset ID.</div>
+              </div>
+              <div class="icon-row">
+                <button class="icon-button" id="drillUp" title="Drill Up" aria-label="Drill Up">&#8593;</button>
+                <button class="icon-button" id="drillDown" title="Drill down" aria-label="Drill down">&#8595;</button>
+              </div>
+            </div>
+            <div id="paretoChart"></div>
+          </div>
+        </section>
+
+        <section id="breakdown" class="view">
+          <div class="card chart-card large">
+            <div class="chart-head">
+              <div>
+                <div class="chart-title">Monthly Cost Breakdown</div>
+                <div class="chart-sub">Costs are aggregated once per visible asset-month.</div>
+              </div>
+              <div class="breakdown-controls">
+                <div class="cost-filter" id="costTypeFilter">
+                  <div class="filter-label">Cost type</div>
+                  <button class="filter-button" id="costTypeButton" type="button" aria-haspopup="true">
+                    <span>All line-item costs</span><span>&#9662;</span>
+                  </button>
+                  <div class="cost-popover" id="costTypePopover">
+                    <label class="cost-option cost-total-row">
+                      <input type="checkbox" value="total_cost">
+                      <span>Total Cost</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="fuel_cost" checked>
+                      <span>Fuel</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="cng_cost" checked>
+                      <span>CNG</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="oil_cost" checked>
+                      <span>Oil</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="misc_cost" checked>
+                      <span>Misc.</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="repair_labor_cost" checked>
+                      <span>Repair labor</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="repair_parts_cost" checked>
+                      <span>Repair parts</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="pm_labor_cost" checked>
+                      <span>PM labor</span>
+                    </label>
+                    <label class="cost-option">
+                      <input type="checkbox" value="pm_parts_cost" checked>
+                      <span>PM parts</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="costLineChart"></div>
+          </div>
+        </section>
+
+        <section id="advanced" class="view">
+          <div class="advanced-warnings" id="advancedWarnings"></div>
+
+          <div class="card chart-card">
+            <div class="chart-head">
+              <div>
+                <div class="chart-title">Probability of No Repair by Runtime Interval</div>
+                <div class="chart-sub" id="weibullChartSub">Miles between repairs on the x-axis; probability of no repair on the y-axis.</div>
+              </div>
+              <label class="chart-filter">Interval Unit
+                <select id="intervalUnitFilter">
+                  <option value="miles">Miles</option>
+                  <option value="hours">Hours</option>
+                </select>
+              </label>
+            </div>
+            <div id="weibullReliabilityChart"></div>
+          </div>
+
+          <div class="card diagnostics-panel">
+            <div class="chart-title">Model Details</div>
+            <div id="weibullModelDetails"></div>
+          </div>
+
+          <details class="card advanced-section" id="weibullDataQuality">
+            <summary>Data Quality Notes</summary>
+            <div class="advanced-section-body diagnostics-grid" id="weibullQualityNotes"></div>
+          </details>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <script src="./fleet_apm_snapshot.js"></script>
+  <script>
+    const API = {
+      maintenance: "https://data.cincinnati-oh.gov/resource/2a8x-bxjm.json",
+      inventory: "https://data.cincinnati-oh.gov/resource/m8ba-xmjz.json",
+      monthly: "https://data.cincinnati-oh.gov/resource/xvtz-r8an.json"
+    };
+
+    const maintenanceFields = [
+      "unique_work_order_no", "create_date", "work_order_yr", "job_type", "eq_equip_no",
+      "work_order_status", "meter_1_reading", "datetime_out_service", "datetime_in_service",
+      "datetime_open", "datetime_finished", "datetime_closed", "downtime_hrs_user",
+      "downtime_hrs_shop", "reas_reas_for_repair", "reas_for_repair_desc",
+      "dept_equip_dept", "dept_equip_dept_name", "meter_1_life_total",
+      "labor_hours", "labor_cost", "parts_cost", "comml_cost", "total_cost",
+      "warranty", "pri_priority_code", "loc_work_order_loc", "loc_work_order_loc_name",
+      "datetime_unit_in", "datetime_due", "datetime_pm_sched"
+    ];
+
+    const inventoryFields = [
+      "eq_equip_no", "asset_type", "class_class_bench", "est_replace_cost",
+      "manufacturer", "model", "description", "department_name", "dept_dept_code",
+      "in_service_date", "last_meter_1_reading", "meter_1_at_delivery", "meter_1_type",
+      "delivery_date", "retire_date", "sale_date", "status_codes", "last_meter_1_date",
+      "year", "class_class_maint", "class_class_pm", "class_class_shop_sch",
+      "original_cost", "est_replace_yr", "est_replace_mo", "weight_gross",
+      "wheelbase", "qty_axles", "cab_axle_len"
+    ];
+
+    const monthlyFields = [
+      "eq_equip_no", "cost_year", "cost_month", "meter_1_usage", "meter_1_eom",
+      "fuel_cost", "cng_cost", "oil_cost", "misc_cost", "repair_labor_cost",
+      "repair_parts_cost", "pm_labor_cost", "pm_parts_cost"
+    ];
+
+    const filters = {
+      year: { label: "Year", field: "work_order_yr", values: new Set() },
+      assetClass: { label: "Asset class", field: "class_class_bench", values: new Set() },
+      department: { label: "Department", field: "dept_equip_dept_name", values: new Set() },
+      manufacturer: { label: "Manufacturer", field: "manufacturer", values: new Set() },
+      model: { label: "Model", field: "model", values: new Set() },
+      assetId: { label: "Asset ID", field: "eq_equip_no", values: new Set() }
+    };
+
+    const defaultExcludedFilterValues = {
+      assetClass: new Set(["Unclassified"]),
+      manufacturer: new Set(["Unknown manufacturer"])
+    };
+
+    const metricThresholds = {
+      mtbf: { target: ">= 500 hr", stretch: ">= 750 hr", critical: "< 150 hr", best: "Higher is better", worst: "0 hr" },
+      mmbf: { target: ">= 7,500 mi", stretch: ">= 10,000 mi", critical: "< 2,500 mi", best: "Higher is better", worst: "0 mi" },
+      mtbr: { target: ">= 500 hr", stretch: ">= 750 hr", critical: "< 150 hr", best: "Higher is better", worst: "0 hr" },
+      mmbr: { target: ">= 7,500 mi", stretch: ">= 10,000 mi", critical: "< 2,500 mi", best: "Higher is better", worst: "0 mi" },
+      reliabilityHr: { target: ">= 70%", stretch: ">= 85%", critical: "< 50%", best: "100%", worst: "0%" },
+      reliabilityMile: { target: ">= 70%", stretch: ">= 85%", critical: "< 50%", best: "100%", worst: "0%" },
+      mttr: { target: "<= 4 hr", stretch: "<= 2 hr", critical: "> 8 hr", best: "0 hr", worst: "Higher is worse" },
+      rav: { target: "<= 3% of RAV", stretch: "<= 2%", critical: "> 5%", best: "0%", worst: "10%+" },
+      pmp: { target: ">= 70%", stretch: ">= 80%", critical: "< 50%", best: "90%+", worst: "0%" },
+      repairs: { target: "Lower is better", stretch: "Top quartile by class", critical: "Class outlier", best: "0", worst: "Highest visible count" },
+      r3: { target: "<= 5%", stretch: "<= 2%", critical: "> 10%", best: "0%", worst: "100%" }
+    };
+
+    const drillLevels = [
+      { key: "assetClass", label: "Asset Class", fn: r => clean(r.class_class_bench) || clean(r.asset_type) || "Unclassified" },
+      { key: "department", label: "Department", fn: r => clean(r.dept_equip_dept_name) || clean(r.department_name) || "Unknown department" },
+      { key: "manufacturer", label: "Manufacturer", fn: r => clean(r.manufacturer) || "Unknown manufacturer" },
+      { key: "model", label: "Model", fn: r => clean(r.model) || "Unknown model" },
+      { key: "assetId", label: "Asset ID", fn: r => clean(r.eq_equip_no) || "Unknown asset" }
+    ];
+
+    const costColors = {
+      total_cost: "#393939",
+      fuel_cost: "#0f62fe",
+      cng_cost: "#007d79",
+      oil_cost: "#8a3ffc",
+      misc_cost: "#f1c21b",
+      repair_labor_cost: "#ff832b",
+      repair_parts_cost: "#da1e28",
+      pm_labor_cost: "#198038",
+      pm_parts_cost: "#1192e8"
+    };
+
+    const state = {
+      rawMaintenance: [],
+      rawInventory: [],
+      rawMonthly: [],
+      merged: [],
+      monthlyMerged: [],
+      inventoryByAsset: new Map(),
+      filterSelections: Object.fromEntries(Object.keys(filters).map(k => [k, new Set()])),
+      filtersInitialized: false,
+      drillDepth: 0,
+      drillPath: [],
+      selectedParetoName: "",
+      currentPareto: [],
+      selectedCostTypes: new Set(["fuel_cost", "cng_cost", "oil_cost", "misc_cost", "repair_labor_cost", "repair_parts_cost", "pm_labor_cost", "pm_parts_cost"]),
+      advanced: {
+        intervalUnit: "miles",
+        year: "all",
+        assetClass: "all",
+        department: "all",
+        manufacturer: "all",
+        model: "all",
+        asset: "all",
+        severity: "all",
+        weightGross: "all",
+        wheelbase: "all",
+        qtyAxles: "all",
+        cabAxleLen: "all"
+      },
+      loading: false,
+      refreshTimer: null
+    };
+
+    const $ = id => document.getElementById(id);
+    const clean = v => (v ?? "").toString().trim();
+    const lc = v => clean(v).toLowerCase();
+    const num = v => Number.isFinite(Number(v)) ? Number(v) : 0;
+    const money = v => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v || 0);
+    const whole = v => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(v || 0);
+    const one = v => new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(v || 0);
+    const pct = v => `${one(v)}%`;
+
+    function init() {
+      renderFilterShells();
+      document.querySelectorAll("[data-tab]").forEach(btn => btn.addEventListener("click", () => setTab(btn.dataset.tab)));
+      $("navToggle").addEventListener("click", () => $("appShell").classList.toggle("nav-collapsed"));
+      $("drillUp").addEventListener("click", drillUp);
+      $("drillDown").addEventListener("click", drillDown);
+      $("freqExpand").addEventListener("click", toggleFrequencyMatrix);
+      initCostTypeFilter();
+      initAdvancedControls();
+      $("intervalUnitFilter").addEventListener("input", () => {
+        state.advanced.intervalUnit = $("intervalUnitFilter").value;
+        render();
+      });
+      document.addEventListener("click", closeFiltersFromOutside);
+      if (window.FLEET_APM_PRELOAD) {
+        loadFromSnapshot(window.FLEET_APM_PRELOAD);
+        scheduleBackgroundLiveRefresh();
+      } else {
+        renderEmpty("Loading latest Cincinnati fleet data...");
+        loadLive();
+      }
+      scheduleCincinnatiRefresh();
+    }
+
+    function toggleFrequencyMatrix() {
+      const card = $("freqCostCard");
+      card.classList.toggle("expanded");
+      const expanded = card.classList.contains("expanded");
+      $("freqExpand").title = expanded ? "Restore chart" : "Enlarge chart";
+      $("freqExpand").setAttribute("aria-label", $("freqExpand").title);
+    }
+
+    function initCostTypeFilter() {
+      $("costTypeButton").addEventListener("click", evt => {
+        evt.stopPropagation();
+        $("costTypeFilter").classList.toggle("open");
+      });
+      $("costTypePopover").querySelectorAll("input[type='checkbox']").forEach(input => {
+        input.addEventListener("change", () => {
+          if (input.value === "total_cost" && input.checked) {
+            state.selectedCostTypes = new Set(["total_cost"]);
+          } else {
+            if (input.checked) {
+              state.selectedCostTypes.delete("total_cost");
+              state.selectedCostTypes.add(input.value);
+            } else {
+              state.selectedCostTypes.delete(input.value);
+            }
+          }
+          if (state.selectedCostTypes.size === 0) {
+            state.selectedCostTypes.add(input.value);
+            input.checked = true;
+          }
+          updateCostTypeButton();
+          render();
+        });
+      });
+      updateCostTypeButton();
+    }
+
+    function updateCostTypeButton() {
+      const inputs = [...$("costTypePopover").querySelectorAll("input[type='checkbox']")];
+      inputs.forEach(input => input.checked = state.selectedCostTypes.has(input.value));
+      const selected = inputs.filter(input => input.checked).map(input => input.nextElementSibling.textContent);
+      const nonTotalCount = inputs.filter(input => input.value !== "total_cost").length;
+      const label = state.selectedCostTypes.has("total_cost")
+        ? "Total Cost"
+        : selected.length === nonTotalCount
+          ? "All line-item costs"
+          : selected.length === 1 ? selected[0] : `${selected.length} selected`;
+      $("costTypeButton").querySelector("span:first-child").textContent = label;
+    }
+
+    function initAdvancedControls() {
+      $("intervalUnitFilter").value = state.advanced.intervalUnit;
+    }
+
+    function renderFilterShells() {
+      for (const [key, cfg] of Object.entries(filters)) {
+        const host = document.querySelector(`[data-filter="${key}"]`);
+        host.innerHTML = `
+          <div class="filter-label">${cfg.label}</div>
+          <button class="filter-button" type="button" aria-haspopup="true">
+            <span>All</span><span>▾</span>
+          </button>
+          <div class="filter-popover">
+            <input class="filter-search" placeholder="Search ${cfg.label.toLowerCase()}">
+            <label class="select-all-row">
+              <input type="checkbox" data-action="selectAll">
+              <span>Select All</span>
+            </label>
+            <div class="filter-actions">
+              <button class="link-button" type="button" data-action="selectVisible">Select visible</button>
+              <button class="link-button" type="button" data-action="clear">Clear</button>
+            </div>
+            <div class="option-list"></div>
+          </div>
+        `;
+        host.querySelector(".filter-button").addEventListener("click", evt => {
+          evt.stopPropagation();
+          document.querySelectorAll(".filter.open").forEach(el => { if (el !== host) el.classList.remove("open"); });
+          host.classList.toggle("open");
+        });
+        host.querySelector(".filter-search").addEventListener("input", () => renderFilterOptions(key));
+        host.querySelector('[data-action="selectAll"]').addEventListener("change", evt => {
+          state.filterSelections[key] = evt.target.checked ? new Set(filters[key].values) : new Set();
+          resetDrill();
+          renderFilterOptions(key);
+          render();
+        });
+        host.querySelector('[data-action="clear"]').addEventListener("click", () => {
+          state.filterSelections[key].clear();
+          resetDrill();
+          renderFilterOptions(key);
+          render();
+        });
+        host.querySelector('[data-action="selectVisible"]').addEventListener("click", () => {
+          const visible = [...host.querySelectorAll(".option input")].map(i => i.value);
+          visible.forEach(v => state.filterSelections[key].add(v));
+          resetDrill();
+          renderFilterOptions(key);
+          render();
+        });
+      }
+    }
+
+    function closeFiltersFromOutside(evt) {
+      if (!evt.target.closest(".filter")) document.querySelectorAll(".filter.open").forEach(el => el.classList.remove("open"));
+      if (!evt.target.closest(".cost-filter")) $("costTypeFilter").classList.remove("open");
+    }
+
+    function updateFilterValues() {
+      const previousValues = Object.fromEntries(Object.keys(filters).map(key => [key, new Set(filters[key].values)]));
+      Object.values(filters).forEach(f => f.values.clear());
+      for (const row of state.merged) {
+        filters.year.values.add(clean(row.work_order_yr));
+        filters.assetClass.values.add(clean(row.class_class_bench) || clean(row.asset_type) || "Unclassified");
+        filters.department.values.add(clean(row.dept_equip_dept_name) || clean(row.department_name) || "Unknown department");
+        filters.manufacturer.values.add(clean(row.manufacturer) || "Unknown manufacturer");
+        filters.model.values.add(clean(row.model) || "Unknown model");
+        filters.assetId.values.add(clean(row.eq_equip_no) || "Unknown asset");
+      }
+      for (const key of Object.keys(filters)) {
+        const values = [...filters[key].values].filter(Boolean);
+        const selected = state.filterSelections[key];
+        const excluded = defaultExcludedFilterValues[key] || new Set();
+        const wasAll = state.filtersInitialized && previousValues[key].size > 0 && [...previousValues[key]].every(value => selected.has(value));
+        const wasDefaultScope = state.filtersInitialized
+          && excluded.size > 0
+          && previousValues[key].size > 0
+          && [...previousValues[key]].every(value => excluded.has(value) ? !selected.has(value) : selected.has(value));
+        for (const value of [...selected]) {
+          if (!filters[key].values.has(value)) selected.delete(value);
+        }
+        if (!state.filtersInitialized || wasDefaultScope) {
+          state.filterSelections[key] = new Set(values.filter(value => !excluded.has(value)));
+        } else if (wasAll) {
+          state.filterSelections[key] = new Set(values);
+        }
+      }
+      state.filtersInitialized = true;
+      Object.keys(filters).forEach(renderFilterOptions);
+    }
+
+    function renderFilterOptions(key) {
+      const host = document.querySelector(`[data-filter="${key}"]`);
+      const cfg = filters[key];
+      const selected = state.filterSelections[key];
+      const search = lc(host.querySelector(".filter-search").value);
+      const values = [...cfg.values].filter(Boolean).sort((a, b) => (
+        key === "year"
+          ? Number(b) - Number(a)
+          : a.localeCompare(b, undefined, { numeric: true })
+      ));
+      const visible = values.filter(v => !search || lc(v).includes(search)).slice(0, 300);
+      const selectAll = host.querySelector('[data-action="selectAll"]');
+      selectAll.checked = values.length > 0 && selected.size === values.length;
+      selectAll.indeterminate = selected.size > 0 && selected.size < values.length;
+      host.querySelector(".option-list").innerHTML = visible.map(v => `
+        <label class="option">
+          <input type="checkbox" value="${escapeHtml(v)}" ${selected.has(v) ? "checked" : ""}>
+          <span>${escapeHtml(v)}</span>
+        </label>
+      `).join("") || `<div class="chart-sub">No matching values</div>`;
+      host.querySelectorAll(".option input").forEach(input => {
+        input.addEventListener("change", () => {
+          if (input.checked) selected.add(input.value);
+          else selected.delete(input.value);
+          resetDrill();
+          updateFilterButton(key);
+          render();
+        });
+      });
+      updateFilterButton(key);
+    }
+
+    function updateFilterButton(key) {
+      const host = document.querySelector(`[data-filter="${key}"]`);
+      const selected = [...state.filterSelections[key]];
+      const allCount = filters[key].values.size;
+      const label = selected.length === allCount && allCount > 0 ? "All" : selected.length === 0 ? "None" : selected.length === 1 ? selected[0] : `${selected.length} selected`;
+      host.querySelector(".filter-button span:first-child").textContent = label;
+    }
+
+    function setTab(tab) {
+      document.querySelectorAll("[data-tab]").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+      document.querySelectorAll(".view").forEach(view => view.classList.toggle("active", view.id === tab));
+      render();
+    }
+
+    async function fetchPaged(url, fields, where = "") {
+      const limit = 50000;
+      let offset = 0;
+      const out = [];
+      while (true) {
+        const params = new URLSearchParams();
+        params.set("$select", fields.join(","));
+        params.set("$limit", String(limit));
+        params.set("$offset", String(offset));
+        if (where) params.set("$where", where);
+        const res = await fetch(`${url}?${params}`);
+        if (!res.ok) throw new Error(`${shortDataset(url)}: ${res.status} ${res.statusText}`);
+        const rows = await res.json();
+        out.push(...rows);
+        setStatus(`Loading ${shortDataset(url)}: ${out.length.toLocaleString()} rows`);
+        if (rows.length < limit) break;
+        offset += limit;
+      }
+      return out;
+    }
+
+    function shortDataset(url) {
+      if (url.includes("2a8x")) return "work orders";
+      if (url.includes("m8ba")) return "inventory";
+      return "monthly costs";
+    }
+
+    function loadFromSnapshot(snapshot) {
+      const inflate = (name) => {
+        const schema = snapshot.schema?.[name];
+        if (!schema || !Array.isArray(snapshot[name])) return [];
+        return rowsToObjects(snapshot[name], schema);
+      };
+      state.rawMaintenance = inflate("maintenance");
+      state.rawInventory = inflate("inventory");
+      state.rawMonthly = inflate("monthly");
+      buildModel();
+      updateFilterValues();
+      render();
+      setStatus(`Loaded local preload from ${new Date(snapshot.generated_at).toLocaleString()}; live refresh will run in the background.`);
+      $("sideStatus").textContent = "Local preload active. Live refresh scheduled.";
+    }
+
+    function rowsToObjects(rows, fields) {
+      return rows.map(row => {
+        const obj = {};
+        for (let i = 0; i < fields.length; i += 1) {
+          const field = fields[i];
+          obj[field] = row[i] ?? "";
+        }
+        return obj;
+      });
+    }
+
+    function scheduleBackgroundLiveRefresh() {
+      const run = () => loadLive({ background: true });
+      if ("requestIdleCallback" in window) {
+        requestIdleCallback(run, { timeout: 10000 });
+      } else {
+        setTimeout(run, 3000);
+      }
+    }
+
+    async function loadLive(options = {}) {
+      if (state.loading) return;
+      state.loading = true;
+      try {
+        setStatus(options.background ? "Refreshing live data in background..." : "Loading latest data...");
+        const maintenance = await fetchPaged(API.maintenance, maintenanceFields);
+        const years = [...new Set(maintenance.map(r => num(r.work_order_yr)).filter(Boolean))].sort((a, b) => a - b);
+        const yearWhere = years.length ? `cost_year in(${years.join(",")})` : "";
+        const [inventory, monthly] = await Promise.all([
+          fetchPaged(API.inventory, inventoryFields),
+          fetchPaged(API.monthly, monthlyFields, yearWhere)
+        ]);
+        state.rawMaintenance = maintenance;
+        state.rawInventory = inventory;
+        state.rawMonthly = monthly;
+        buildModel();
+        updateFilterValues();
+        render();
+        const stamp = new Date().toLocaleString();
+        setStatus(`Last updated ${stamp}`);
+        $("sideStatus").textContent = `Last refresh: ${stamp}`;
+      } catch (err) {
+        console.error(err);
+        setStatus(`Live load failed: ${err.message}`);
+        if (!state.merged.length) renderEmpty("Live data could not be loaded. Check network access and refresh the page.");
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    function scheduleCincinnatiRefresh() {
+      if (state.refreshTimer) clearTimeout(state.refreshTimer);
+      const next = nextCincinnatiRefreshMs();
+      state.refreshTimer = setTimeout(async () => {
+        await loadLive({ background: true });
+        scheduleCincinnatiRefresh();
+      }, next);
+    }
+
+    function nextCincinnatiRefreshMs() {
+      const now = new Date();
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/New_York",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).formatToParts(now).reduce((acc, part) => {
+        if (part.type !== "literal") acc[part.type] = Number(part.value);
+        return acc;
+      }, {});
+      const cincinnatiAsLocal = new Date(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+      let targetAsLocal = new Date(parts.year, parts.month - 1, parts.day, 23, 59, 0);
+      if (cincinnatiAsLocal >= targetAsLocal) targetAsLocal.setDate(targetAsLocal.getDate() + 1);
+      return Math.max(1000, targetAsLocal - cincinnatiAsLocal);
+    }
+
+    function buildModel() {
+      state.inventoryByAsset = new Map();
+      for (const row of state.rawInventory) {
+        state.inventoryByAsset.set(clean(row.eq_equip_no), row);
+      }
+      state.merged = state.rawMaintenance.map(row => normalizeMerged(row, state.inventoryByAsset.get(clean(row.eq_equip_no)), row.dept_equip_dept_name));
+      state.monthlyMerged = state.rawMonthly.map(row => normalizeMerged(row, state.inventoryByAsset.get(clean(row.eq_equip_no))));
+    }
+
+    function normalizeMerged(row, inventory = {}, workOrderDeptName = "") {
+      const merged = Object.assign({}, row, inventory || {});
+      Object.assign(merged, {
+        work_order_dept_name: clean(workOrderDeptName),
+        eq_equip_no: clean(merged.eq_equip_no),
+        class_class_bench: clean(merged.class_class_bench),
+        asset_type: clean(merged.asset_type),
+        dept_equip_dept_name: clean(workOrderDeptName) || clean(merged.dept_equip_dept_name) || clean(merged.department_name),
+        department_name: clean(merged.department_name),
+        manufacturer: clean(merged.manufacturer),
+        model: clean(merged.model),
+        description: clean(merged.description),
+        meter_1_type: clean(merged.meter_1_type),
+        meter_1_at_delivery: num(merged.meter_1_at_delivery),
+        last_meter_1_reading: num(merged.last_meter_1_reading),
+        class_class_maint: clean(merged.class_class_maint),
+        class_class_pm: clean(merged.class_class_pm),
+        class_class_shop_sch: clean(merged.class_class_shop_sch),
+        year: clean(merged.year),
+        weight_gross: clean(merged.weight_gross),
+        wheelbase: clean(merged.wheelbase),
+        qty_axles: clean(merged.qty_axles),
+        cab_axle_len: clean(merged.cab_axle_len),
+        delivery_date: clean(merged.delivery_date),
+        retire_date: clean(merged.retire_date),
+        sale_date: clean(merged.sale_date),
+        status_codes: clean(merged.status_codes),
+        last_meter_1_date: clean(merged.last_meter_1_date),
+        pri_priority_code: clean(merged.pri_priority_code),
+        warranty: clean(merged.warranty),
+        loc_work_order_loc: clean(merged.loc_work_order_loc),
+        loc_work_order_loc_name: clean(merged.loc_work_order_loc_name),
+        datetime_unit_in: clean(merged.datetime_unit_in),
+        datetime_due: clean(merged.datetime_due),
+        datetime_pm_sched: clean(merged.datetime_pm_sched),
+        work_order_yr: num(merged.work_order_yr),
+        cost_year: num(merged.cost_year),
+        cost_month: num(merged.cost_month)
+      });
+      return merged;
+    }
+
+    function renderEmpty(text) {
+      $("kpis").innerHTML = "";
+      $("freqCostChart").innerHTML = `<div class="empty">${escapeHtml(text)}</div>`;
+      $("reasonChart").innerHTML = `<div class="empty">${escapeHtml(text)}</div>`;
+      $("paretoChart").innerHTML = `<div class="empty">${escapeHtml(text)}</div>`;
+      $("costLineChart").innerHTML = `<div class="empty">${escapeHtml(text)}</div>`;
+    }
+
+    function resetDrill() {
+      state.drillDepth = 0;
+      state.drillPath = [];
+      state.selectedParetoName = "";
+    }
+
+    function filterRows(rows, dateField) {
+      return rows.filter(row => {
+        const year = clean(dateField === "month" ? row.cost_year : row.work_order_yr);
+        if (!passesMulti(row, "year", year)) return false;
+        return passesMulti(row, "assetClass", clean(row.class_class_bench) || clean(row.asset_type) || "Unclassified")
+          && passesMulti(row, "department", clean(row.dept_equip_dept_name) || clean(row.department_name) || "Unknown department")
+          && passesMulti(row, "manufacturer", clean(row.manufacturer) || "Unknown manufacturer")
+          && passesMulti(row, "model", clean(row.model) || "Unknown model")
+          && passesMulti(row, "assetId", clean(row.eq_equip_no) || "Unknown asset");
+      });
+    }
+
+    function passesMulti(row, key, value) {
+      const set = state.filterSelections[key];
+      return set.has(value);
+    }
+
+    function render() {
+      if (!state.merged.length) {
+        renderEmpty("Loading latest Cincinnati fleet data...");
+        return;
+      }
+      const workOrders = filterRows(state.merged, "date");
+      const assets = new Set(workOrders.map(r => r.eq_equip_no));
+      const monthly = filterRows(state.monthlyMerged, "month").filter(r => assets.size === 0 || assets.has(r.eq_equip_no));
+      const activeTab = document.querySelector(".view.active")?.id || "health";
+      if (activeTab === "health") {
+        renderKpis(calculateKpis(workOrders));
+        renderFrequencyCost(workOrders);
+        renderReasonScatter(workOrders);
+      } else if (activeTab === "pareto") {
+        renderPareto(workOrders, monthly);
+      } else if (activeTab === "breakdown") {
+        renderCostLines(monthly);
+      } else if (activeTab === "advanced") {
+        renderAdvancedAnalytics();
+      }
+    }
+
+    function isPm(row) {
+      const text = `${row.job_type || ""} ${row.reas_for_repair_desc || ""}`.toLowerCase();
+      return text.includes("pm") || text.includes("prevent");
+    }
+
+    function isRepair(row) {
+      return !isPm(row);
+    }
+
+    function calculateKpis(rows) {
+      const assets = buildAssetMetrics(rows);
+      const hoursAssets = assets.filter(a => a.meterKind === "hours" && a.operating > 0);
+      const milesAssets = assets.filter(a => a.meterKind === "miles" && a.operating > 0);
+      const hourOperating = sum(hoursAssets, a => a.operating);
+      const mileOperating = sum(milesAssets, a => a.operating);
+      const hourFailures = sum(hoursAssets, a => a.failures);
+      const mileFailures = sum(milesAssets, a => a.failures);
+      const hourRepairs = sum(hoursAssets, a => a.repairs);
+      const mileRepairs = sum(milesAssets, a => a.repairs);
+      const allRepairs = sum(assets, a => a.repairs);
+      const laborHours = sum(assets, a => a.repairLaborHours);
+      const totalCost = sum(assets, a => a.totalCost);
+      const pmCost = sum(assets, a => a.pmCost);
+      const ravAssets = assets.filter(a => a.rav > 0);
+      const ravCost = sum(ravAssets, a => a.totalCost);
+      const rav = sum(ravAssets, a => a.rav);
+      const repairedAssets = assets.filter(a => a.repairs > 0).length;
+      const repeatAssets = assets.filter(a => a.repeatRepair).length;
+      const mtbf = hourFailures ? hourOperating / hourFailures : 0;
+      const mmbf = mileFailures ? mileOperating / mileFailures : 0;
+      const mtbr = hourRepairs ? hourOperating / hourRepairs : 0;
+      const mmbr = mileRepairs ? mileOperating / mileRepairs : 0;
+      const reliabilityHr = mtbf ? Math.exp(-360 / mtbf) * 100 : 0;
+      const reliabilityMile = mmbf ? Math.exp(-3600 / mmbf) * 100 : 0;
+      const mttr = allRepairs ? laborHours / allRepairs : 0;
+      const ravPct = rav ? ravCost / rav * 100 : 0;
+      const pmp = totalCost ? pmCost / totalCost * 100 : 0;
+      const r3 = repairedAssets ? repeatAssets / repairedAssets * 100 : 0;
+      return [
+        {
+          id: "mtbf_mmbf",
+          label: "MTBF | MMBF",
+          fullName: "Mean Time Before Failure (MTBF) and Mean Miles Before Failure (MMBF)",
+          desc: "Shows how many hours or miles assets usually run before they need a repair. This helps compare reliability between assets measured in hours and assets measured in miles.",
+          split: [
+            { id: "mtbf", label: "MTBF", value: mtbf ? `${one(mtbf)} hr` : "n/a", note: `${whole(hourFailures)} repairs / ${whole(hourOperating)} hr` },
+            { id: "mmbf", label: "MMBF", value: mmbf ? `${whole(mmbf)} mi` : "n/a", note: `${whole(mileFailures)} repairs / ${whole(mileOperating)} mi` }
+          ]
+        },
+        {
+          id: "mtbr_mmbr",
+          label: "MTBR | MMBR",
+          fullName: "Mean Time Between Repairs (MTBR) and Mean Miles Between Repairs (MMBR)",
+          desc: "Shows the average hours or miles between repair visits. This helps identify assets that come back for repairs too often.",
+          split: [
+            { id: "mtbr", label: "MTBR", value: mtbr ? `${one(mtbr)} hr` : "n/a", note: `${whole(hourRepairs)} repairs` },
+            { id: "mmbr", label: "MMBR", value: mmbr ? `${whole(mmbr)} mi` : "n/a", note: `${whole(mileRepairs)} repairs` }
+          ]
+        },
+        {
+          id: "reliability",
+          label: "REL/hr | REL/mi",
+          fullName: "Reliability per Hour Mission and Reliability per Mile Mission",
+          desc: "Estimates the chance an asset can complete a typical mission without needing a repair. This turns repair history into an easy risk score.",
+          split: [
+            { id: "reliabilityHr", label: "Reliability/hr", value: pct(reliabilityHr), note: "360-hour mission" },
+            { id: "reliabilityMile", label: "Reliability/mile", value: pct(reliabilityMile), note: "3,600-mile mission" }
+          ]
+        },
+        {
+          id: "mttr",
+          label: "MTTR",
+          fullName: "Mean Time To Repair (MTTR)",
+          desc: "Shows the average labor hours spent on each repair. This helps understand repair difficulty and how quickly work is completed.",
+          value: mttr ? `${one(mttr)} hr` : "n/a",
+          state: `${whole(laborHours)} labor hr / ${whole(allRepairs)} repairs`,
+          note: "Calculated from labor_hours"
+        },
+        {
+          id: "rav",
+          label: "Cost % RAV",
+          fullName: "Maintenance Cost as a Percent of Replacement Asset Value (RAV)",
+          desc: "Shows maintenance spending compared with the cost to replace the assets. This helps decide when repair costs may be getting too high.",
+          value: pct(ravPct),
+          state: `${money(ravCost)} / ${money(rav)}`
+        },
+        {
+          id: "pmp",
+          label: "PMP",
+          fullName: "Planned Maintenance Percentage (PMP)",
+          desc: "Shows how much maintenance spending is planned work instead of reactive repair work. This helps show whether the program is proactive.",
+          value: pct(pmp),
+          state: `${money(pmCost)} PM / ${money(totalCost)} total`
+        },
+        {
+          id: "repairs",
+          label: "Repairs",
+          fullName: "Number of Repairs",
+          desc: "Counts unique repair work orders. This helps identify assets, departments, or manufacturers creating the most repair workload.",
+          value: whole(allRepairs),
+          state: `${whole(repairedAssets)} repaired assets`,
+          note: "Counts UNIQUE_WORK_ORDER_NO"
+        },
+        {
+          id: "r3",
+          label: "R3",
+          fullName: "Repeat Repair Rate (R3)",
+          desc: "Shows the share of repaired vehicles that came back for the same issue within 30 days. This helps find repairs that may not have fully fixed the problem.",
+          value: pct(r3),
+          state: `${whole(repeatAssets)} repeat assets / ${whole(repairedAssets)} repaired assets`,
+          note: "Same repair reason within 30 days"
+        }
+      ];
+    }
+
+    function buildAssetMetrics(rows) {
+      return [...groupBy(rows, r => r.eq_equip_no).entries()].map(([asset, assetRows]) => {
+        const first = assetRows[0] || {};
+        const repairs = assetRows.filter(isRepair);
+        const pmRows = assetRows.filter(isPm);
+        const repairWorkOrders = uniqueWorkOrders(repairs);
+        const pmWorkOrders = uniqueWorkOrders(pmRows);
+        const meterKind = meterKindFor(first.meter_1_type);
+        const operating = meterKind === "none" ? 0 : Math.max(0, num(first.last_meter_1_reading) - num(first.meter_1_at_delivery));
+        return {
+          asset,
+          meterKind,
+          operating,
+          failures: repairWorkOrders.size,
+          repairs: repairWorkOrders.size,
+          pmEvents: pmWorkOrders.size,
+          repairLaborHours: sum(repairs, r => num(r.labor_hours)),
+          totalCost: sum(assetRows, r => num(r.total_cost)),
+          repairCost: sum(repairs, r => num(r.total_cost)),
+          pmCost: sum(pmRows, r => num(r.total_cost)),
+          rav: num(first.est_replace_cost),
+          repeatRepair: hasRepeatRepair(repairs)
+        };
+      });
+    }
+
+    function renderKpis(kpis) {
+      $("kpis").innerHTML = kpis.map(k => `
+        <article class="card kpi">
+          <div class="kpi-title" tabindex="0">${k.label}
+            <div class="name-tip"><strong>${k.fullName}</strong><br>${k.desc}</div>
+          </div>
+          <div class="info" tabindex="0">i
+            <div class="tip">${k.split ? k.split.map(thresholdText).join("<br><br>") : thresholdText(k)}</div>
+          </div>
+          ${k.split ? `
+            <div class="kpi-split">
+              <div>
+                <div class="kpi-sub-label">${k.split[0].label}</div>
+                <div class="kpi-sub-value">${k.split[0].value}</div>
+              </div>
+              <div class="kpi-divider"></div>
+              <div>
+                <div class="kpi-sub-label">${k.split[1].label}</div>
+                <div class="kpi-sub-value">${k.split[1].value}</div>
+              </div>
+            </div>
+          ` : `
+            <div class="kpi-state">${k.state}</div>
+            <div class="kpi-value">${k.value}</div>
+          `}
+        </article>
+      `).join("");
+    }
+
+    function thresholdText(item) {
+      const t = metricThresholds[item.id] || {};
+      return `<strong>${item.label} thresholds</strong><br>Target: ${t.target || "n/a"}<br>Stretch: ${t.stretch || "n/a"}<br>Critical: ${t.critical || "n/a"}<br>Best: ${t.best || "n/a"}<br>Worst: ${t.worst || "n/a"}`;
+    }
+
+    function uniqueWorkOrders(rows) {
+      return new Set(rows.map(r => clean(r.unique_work_order_no)).filter(Boolean));
+    }
+
+    function meterKindFor(value) {
+      const text = lc(value);
+      if (text.includes("hour")) return "hours";
+      if (text.includes("mile") || text.includes("hub")) return "miles";
+      return "none";
+    }
+
+    function hasRepeatRepair(repairs) {
+      const byReason = groupBy(uniqueRowsByWorkOrder(repairs), r => clean(r.reas_for_repair_desc) || clean(r.reas_reas_for_repair) || "Unknown");
+      for (const reasonRows of byReason.values()) {
+        const dates = reasonRows.map(r => new Date(r.create_date)).filter(d => !isNaN(d)).sort((a, b) => a - b);
+        for (let i = 1; i < dates.length; i++) {
+          if ((dates[i] - dates[i - 1]) / 86400000 <= 30) return true;
+        }
+      }
+      return false;
+    }
+
+    function uniqueRowsByWorkOrder(rows) {
+      const seen = new Set();
+      return rows.filter(row => {
+        const id = clean(row.unique_work_order_no);
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+    }
+
+    function rate(value) {
+      if (!value) return "0";
+      if (value >= 0.01) return value.toFixed(3);
+      if (value >= 0.0001) return value.toFixed(5);
+      return value.toExponential(2);
+    }
+
+    function renderFrequencyCost(rows) {
+      const repairs = rows.filter(isRepair);
+      const byAsset = groupBy(repairs, r => r.eq_equip_no);
+      const points = [...byAsset.entries()].map(([asset, rs]) => {
+        const first = rs[0] || {};
+        return {
+          asset,
+          x: sum(rs, r => num(r.total_cost)),
+          y: uniqueWorkOrders(rs).size,
+          group: clean(first.manufacturer) || "Unknown manufacturer",
+          description: clean(first.description),
+          label: `${asset} - ${clean(first.description) || `${clean(first.manufacturer)} ${clean(first.model)}`}`
+        };
+      }).filter(p => p.x || p.y);
+      const knownManufacturerPoints = points.filter(p => lc(p.group) !== "unknown manufacturer");
+      $("freqCostChart").innerHTML = scatterSvg(knownManufacturerPoints, "Total repair cost", "Number of repairs");
+    }
+
+    function renderReasonScatter(rows) {
+      const repairs = rows.filter(isRepair);
+      const byReason = groupBy(repairs, r => clean(r.reas_for_repair_desc) || clean(r.reas_reas_for_repair) || "Unknown");
+      const items = [...byReason.entries()].map(([reason, rs]) => ({
+        reason,
+        cost: sum(rs, r => num(r.total_cost)),
+        count: rs.length
+      })).sort((a, b) => b.cost - a.cost).slice(0, 24);
+      $("reasonChart").innerHTML = reasonBarsSvg(items);
+    }
+
+    function renderPareto(workOrders, monthly) {
+      let scopedWorkOrders = workOrders;
+      let scopedMonthly = monthly;
+      for (let i = 0; i < state.drillPath.length; i++) {
+        const level = drillLevels[i];
+        scopedWorkOrders = scopedWorkOrders.filter(r => level.fn(r) === state.drillPath[i]);
+        scopedMonthly = scopedMonthly.filter(r => level.fn(r) === state.drillPath[i]);
+      }
+      const level = drillLevels[state.drillDepth] || drillLevels[drillLevels.length - 1];
+      const data = aggregateTotalCost(scopedWorkOrders, scopedMonthly, level.fn).sort((a, b) => b.cost - a.cost).slice(0, 40);
+      state.currentPareto = data;
+      if (!state.selectedParetoName && data[0]) state.selectedParetoName = data[0].name;
+      if (!data.some(d => d.name === state.selectedParetoName)) state.selectedParetoName = data[0]?.name || "";
+      const path = state.drillPath.length ? `Filtered path: ${state.drillPath.join(" / ")}` : "Top level";
+      $("paretoTitle").textContent = `Total Cost by ${level.label}`;
+      $("paretoSub").textContent = `${path}. Select a bar, then use Drill down.`;
+      $("drillUp").disabled = state.drillDepth === 0;
+      $("drillDown").disabled = state.drillDepth >= drillLevels.length - 1 || !data.length;
+      $("paretoChart").innerHTML = paretoSvg(data, level.label);
+    }
+
+    function aggregateTotalCost(workOrders, monthly, keyFn) {
+      const buckets = new Map();
+      const assetToKeys = new Map();
+      for (const row of workOrders) {
+        const key = keyFn(row);
+        if (!buckets.has(key)) buckets.set(key, { name: key, cost: 0, workOrders: 0, assets: new Set() });
+        const b = buckets.get(key);
+        b.cost += num(row.total_cost);
+        b.workOrders += 1;
+        b.assets.add(row.eq_equip_no);
+        assetToKeys.set(row.eq_equip_no, key);
+      }
+      return [...buckets.values()].map(b => ({ ...b, assetCount: b.assets.size }));
+    }
+
+    function drillDown() {
+      if (state.drillDepth >= drillLevels.length - 1) return;
+      const selected = state.selectedParetoName || state.currentPareto[0]?.name;
+      if (!selected) return;
+      state.drillPath.push(selected);
+      state.drillDepth += 1;
+      state.selectedParetoName = "";
+      render();
+    }
+
+    function drillUp() {
+      if (state.drillDepth === 0) return;
+      state.drillPath.pop();
+      state.drillDepth -= 1;
+      state.selectedParetoName = "";
+      render();
+    }
+
+    function renderCostLines(monthly) {
+      const byMonth = groupBy(monthly, r => `${num(r.cost_year)}-${String(num(r.cost_month)).padStart(2, "0")}`);
+      const data = [...byMonth.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([month, rows]) => {
+        const item = { month };
+        Object.keys(costColors).forEach(field => {
+          item[field] = field === "total_cost"
+            ? sum(rows, r => costTypeFields().reduce((acc, costField) => acc + num(r[costField]), 0))
+            : sum(rows, r => num(r[field]));
+        });
+        return item;
+      });
+      const series = Object.keys(costColors).filter(field => state.selectedCostTypes.has(field));
+      $("costLineChart").innerHTML = lineSvg(data, series);
+    }
+
+    function costTypeFields() {
+      return ["fuel_cost", "cng_cost", "oil_cost", "misc_cost", "repair_labor_cost", "repair_parts_cost", "pm_labor_cost", "pm_parts_cost"];
+    }
+
+    function renderAdvancedAnalytics() {
+      if (!$("advancedCards") || !state.merged.length) return;
+      populateAdvancedOptions();
+      const result = runAdvancedWeibullAnalysis();
+      renderAdvancedCards(result);
+      renderAdvancedWarnings(result);
+      renderAdvancedMeta(result);
+      renderAdvancedCharts(result);
+      renderAdvancedDiagnostics(result.diagnostics);
+      renderAdvancedComparison(result);
+    }
+
+    function populateAdvancedOptions() {
+      const rows = filterRows(state.merged, "date");
+      const allMeterTypes = unique(rows.map(r => normalizeString(r.meter_1_type)).filter(Boolean));
+      $("advBasis").querySelector('option[value="meter"]').disabled = allMeterTypes.length === 0;
+      if (state.advanced.mode === "meter" && allMeterTypes.length === 0) state.advanced.mode = "repair";
+      $("advBasis").value = state.advanced.mode;
+      const groupValues = state.advanced.viewBy === "overall" ? [] : unique(rows.map(r => advancedGroupValue(r, state.advanced.viewBy)).filter(Boolean));
+      $("advGroupWrap").classList.toggle("hidden", state.advanced.viewBy === "overall");
+      setSelectOptions("advGroup", groupValues, state.advanced.selectedGroup, "All", "all");
+      state.advanced.selectedGroup = $("advGroup").value || "all";
+
+      setSelectOptions("advAssetType", unique(rows.map(r => clean(r.asset_type))).filter(Boolean), state.advanced.assetType, "All asset types");
+      setSelectOptions("advReasonCode", unique(rows.map(r => clean(r.reas_reas_for_repair))).filter(Boolean), state.advanced.reasonCode, "All reason codes");
+      setSelectOptions("advReasonDesc", unique(rows.map(r => clean(r.reas_for_repair_desc))).filter(Boolean), state.advanced.reasonDesc, "All reason descriptions");
+      setSelectOptions("advStatus", unique(rows.map(r => clean(r.work_order_status))).filter(Boolean), state.advanced.status, "All statuses");
+
+      if (!state.advanced.asOfDate) {
+        state.advanced.asOfDate = formatDateInput(defaultAnalysisAsOfDate());
+      }
+      $("advAsOfDate").value = state.advanced.asOfDate;
+
+      const meterTypes = availableMeterTypesForAdvancedSelection(rows);
+      if (state.advanced.mode === "meter" && meterTypes.length === 1) state.advanced.meterType = meterTypes[0];
+      if (state.advanced.mode === "meter" && meterTypes.length > 1 && !meterTypes.includes(state.advanced.meterType)) state.advanced.meterType = "";
+      $("advMainMeterTypeWrap").classList.toggle("hidden", !(state.advanced.mode === "meter" && meterTypes.length > 1));
+      setSelectOptions("advMainMeterType", meterTypes, state.advanced.meterType, "Choose meter type");
+      setSelectOptions("advMeterType", meterTypes, state.advanced.meterType, "All meter types");
+      state.advanced.meterType = $("advMeterType").value || $("advMainMeterType").value || state.advanced.meterType;
+    }
+
+    function setSelectOptions(id, values, selected, allLabel, allValue = "") {
+      const el = $(id);
+      const current = selected || el.value || "";
+      const sorted = values.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      el.innerHTML = `<option value="${escapeAttr(allValue)}">${escapeHtml(allLabel)}</option>` + sorted.map(v => `<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join("");
+      el.value = sorted.includes(current) || current === allValue ? current : allValue;
+      const key = idToAdvancedKey(id);
+      if (key) state.advanced[key] = el.value;
+    }
+
+    function idToAdvancedKey(id) {
+      return {
+        advGroup: "selectedGroup", advMeterType: "meterType", advMainMeterType: "meterType",
+        advAssetType: "assetType", advReasonCode: "reasonCode",
+        advReasonDesc: "reasonDesc", advStatus: "status", advWarrantyMode: "warrantyMode"
+      }[id] || "";
+    }
+
+    function availableMeterTypesForAdvancedSelection(rows) {
+      return unique(rows
+        .filter(r => state.advanced.viewBy === "overall" || state.advanced.selectedGroup === "all" || advancedGroupValue(r, state.advanced.viewBy) === state.advanced.selectedGroup)
+        .filter(r => !state.advanced.assetType || clean(r.asset_type) === state.advanced.assetType)
+        .map(r => normalizeString(r.meter_1_type))
+        .filter(Boolean));
+    }
+
+    function runAdvancedWeibullAnalysis() {
+      const filterState = { ...state.advanced };
+      const filtered = applyAdvancedAnalyticsFilters(state.rawInventory, state.merged, state.monthlyMerged, filterState);
+      const intervals = filterState.mode === "meter"
+        ? buildMeterIntervalDataset(filtered.inventory, filtered.maintenance, filtered.monthly, filterState, filtered.diagnostics)
+        : buildRepairIntervalDataset(filtered.inventory, filtered.maintenance, filtered.monthly, filterState, filtered.diagnostics);
+      const fit = fitWeibullMLE(intervals);
+      const stats = intervalStats(intervals);
+      const qualifyingEventCount = countQualifyingRepairEvents(filtered.maintenance, filterState);
+      const warnings = [...filtered.warnings, ...fit.warnings];
+      if (filtered.diagnostics.mixedMeterTypes) warnings.push("Choose one meter type to estimate usage between repairs.");
+      const oneRepairShare = filtered.inventory.length ? filtered.diagnostics.assetsWithFewerThanTwoQualifyingRepairs / filtered.inventory.length : 0;
+      if (oneRepairShare > 0.5) warnings.push("Many assets have only one repair record, so they cannot contribute repair-to-repair intervals.");
+      return { ...filtered, intervals, fit, stats, warnings, filterState, qualifyingEventCount, asOfDate: parseDate(filterState.asOfDate) || defaultAnalysisAsOfDate() };
+    }
+
+    function applyAdvancedAnalyticsFilters(inventoryRows, maintenanceRows, monthlyRows, filterState) {
+      const diagnostics = emptyDiagnostics();
+      const warnings = [];
+      const globalRows = filterRows(maintenanceRows, "date");
+      const globalAssets = new Set(globalRows.map(r => normalizeAssetId(r.eq_equip_no)).filter(Boolean));
+      const inventory = inventoryRows
+        .map(r => normalizeMerged(r))
+        .filter(r => globalAssets.has(normalizeAssetId(r.eq_equip_no)))
+        .filter(r => filterState.viewBy === "overall" || filterState.selectedGroup === "all" || advancedGroupValue(r, filterState.viewBy) === filterState.selectedGroup)
+        .filter(r => !filterState.assetType || clean(r.asset_type) === filterState.assetType)
+        .filter(r => !filterState.meterType || normalizeString(r.meter_1_type) === filterState.meterType);
+      const inventoryAssets = new Set(inventory.map(r => normalizeAssetId(r.eq_equip_no)));
+      diagnostics.inventoryAssetsWithoutWorkOrders = inventoryRows.filter(r => !globalAssets.has(normalizeAssetId(r.eq_equip_no))).length;
+      const unmatched = globalRows.filter(r => !state.inventoryByAsset.has(normalizeAssetId(r.eq_equip_no))).length;
+      diagnostics.workOrdersWithoutMatchingInventory = unmatched;
+      if (globalRows.length && unmatched / globalRows.length > 0.25) warnings.push("High percentage of work orders do not match an inventory asset.");
+      let maintenance = globalRows.filter(r => inventoryAssets.has(normalizeAssetId(r.eq_equip_no)));
+      maintenance.forEach(row => {
+        if (!getWorkOrderEventDate(row)) diagnostics.workOrdersMissingUsableEventDate += 1;
+      });
+      const warrantyLoaded = maintenance.some(r => clean(r.warranty));
+      if (filterState.warrantyMode !== "all" && !warrantyLoaded) warnings.push("Warranty field is not populated for the current selection.");
+      maintenance = maintenance
+        .filter(r => !filterState.status || clean(r.work_order_status) === filterState.status)
+        .filter(r => !filterState.reasonCode || clean(r.reas_reas_for_repair) === filterState.reasonCode)
+        .filter(r => !filterState.reasonDesc || clean(r.reas_for_repair_desc) === filterState.reasonDesc)
+        .filter(r => filterState.warrantyMode === "all" || (filterState.warrantyMode === "exclude" ? !isWarrantyRepair(r) : isWarrantyRepair(r)))
+        .filter(r => inAdvancedDateRange(r, filterState));
+      if (filterState.includePm) warnings.push("Preventative maintenance records are included as repair events.");
+      const monthly = filterRows(monthlyRows, "month").filter(r => inventoryAssets.has(normalizeAssetId(r.eq_equip_no)));
+      return { inventory, maintenance, monthly, diagnostics, warnings };
+    }
+
+    function buildRepairIntervalDataset(filteredInventory, filteredMaintenance, monthlyRows, filterState, diagnostics) {
+      const config = repairConfig(filterState);
+      const inventoryByAsset = new Map(filteredInventory.map(r => [normalizeAssetId(r.eq_equip_no), r]));
+      const rowsByAsset = groupBy(filteredMaintenance, r => normalizeAssetId(r.eq_equip_no));
+      const intervals = [];
+      for (const [asset, rows] of rowsByAsset.entries()) {
+        const inv = inventoryByAsset.get(asset) || {};
+        const allWithDates = rows.map(r => ({ row: r, date: getWorkOrderEventDate(r) })).filter(x => x.date);
+        const repairCandidates = allWithDates.filter(x => isRepairWorkOrder(x.row, config));
+        if (usesSeverityFilters(filterState)) diagnostics.intervalsExcludedBySeverity += repairCandidates.filter(x => !passesSeverityThresholds(x.row, filterState)).length;
+        const events = repairCandidates
+          .filter(x => passesSeverityThresholds(x.row, filterState))
+          .sort((a, b) => a.date - b.date);
+        diagnostics.pmRecordsExcluded += allWithDates.filter(x => isPm(x.row) && !filterState.includePm).length;
+        diagnostics.nonRepairJobTypesExcluded += allWithDates.filter(x => !isRepairWorkOrder(x.row, config) && !isPm(x.row)).length;
+        if (!events.length) diagnostics.assetsWithNoQualifyingRepairs += 1;
+        if (events.length === 1) diagnostics.assetsWithFewerThanTwoQualifyingRepairs += 1;
+        for (let i = 1; i < events.length; i++) {
+          const interval = (events[i].date - events[i - 1].date) / 86400000;
+          if (!(interval > 0)) {
+            diagnostics.zeroOrNegativeIntervals += 1;
+            continue;
+          }
+          intervals.push(makeIntervalObservation(asset, "repair_interval", interval, "days", 1, events[i - 1], events[i], inv));
+        }
+        if (filterState.includeCensored && events.length) {
+          const censorDate = latestAssetActivityDate(asset, rows, monthlyRows, filterState);
+          const last = events[events.length - 1];
+          if (censorDate && censorDate > last.date) {
+            intervals.push(makeIntervalObservation(asset, "repair_interval", (censorDate - last.date) / 86400000, "days", 0, last, null, inv, censorDate));
+            diagnostics.finalCensoredIntervalsAdded += 1;
+          }
+        }
+      }
+      return intervals;
+    }
+
+    function countQualifyingRepairEvents(rows, filterState) {
+      const cfg = repairConfig(filterState);
+      return new Set(rows
+        .filter(row => getWorkOrderEventDate(row))
+        .filter(row => isRepairWorkOrder(row, cfg))
+        .filter(row => passesSeverityThresholds(row, filterState))
+        .map(row => clean(row.unique_work_order_no))
+        .filter(Boolean)).size;
+    }
+
+    function buildMeterIntervalDataset(filteredInventory, filteredMaintenance, monthlyRows, filterState, diagnostics) {
+      const config = repairConfig(filterState);
+      const inventoryByAsset = new Map(filteredInventory.map(r => [normalizeAssetId(r.eq_equip_no), r]));
+      const selectedMeterTypes = unique(filteredInventory.map(r => normalizeString(r.meter_1_type)).filter(Boolean));
+      if (!filterState.meterType && selectedMeterTypes.length > 1) {
+        diagnostics.mixedMeterTypes = selectedMeterTypes.length;
+        return [];
+      }
+      const rowsByAsset = groupBy(filteredMaintenance, r => normalizeAssetId(r.eq_equip_no));
+      const intervals = [];
+      for (const [asset, rows] of rowsByAsset.entries()) {
+        const inv = inventoryByAsset.get(asset) || {};
+        const meterType = normalizeString(inv.meter_1_type || rows[0]?.meter_1_type);
+        const candidates = rows
+          .map(r => ({ row: r, date: getWorkOrderEventDate(r), meter: parseNumber(r.meter_1_reading) ?? parseNumber(r.meter_1_life_total) }))
+          .filter(x => x.date && isRepairWorkOrder(x.row, config));
+        if (usesSeverityFilters(filterState)) diagnostics.intervalsExcludedBySeverity += candidates.filter(x => !passesSeverityThresholds(x.row, filterState)).length;
+        const events = candidates
+          .filter(x => passesSeverityThresholds(x.row, filterState))
+          .sort((a, b) => a.date - b.date);
+        if (!events.length) diagnostics.assetsWithNoQualifyingRepairs += 1;
+        if (events.length === 1) diagnostics.assetsWithFewerThanTwoQualifyingRepairs += 1;
+        for (let i = 1; i < events.length; i++) {
+          if (events[i - 1].meter == null || events[i].meter == null) {
+            diagnostics.meterIntervalsMissingReadings += 1;
+            continue;
+          }
+          const interval = events[i].meter - events[i - 1].meter;
+          if (interval <= 0) {
+            diagnostics.meterIntervalsNegativeDeltas += 1;
+            continue;
+          }
+          intervals.push(makeIntervalObservation(asset, "meter_interval", interval, meterType || "meter units", 1, events[i - 1], events[i], inv));
+        }
+      }
+      return intervals;
+    }
+
+    function makeIntervalObservation(asset, mode, interval, unit, observed, start, end, inv, censorDate = null) {
+      const endRow = end?.row || {};
+      const startRow = start?.row || {};
+      return {
+        eq_equip_no: asset,
+        analysis_mode: mode,
+        interval_value: interval,
+        interval_unit: unit,
+        event_observed: observed,
+        start_event_date: start?.date || null,
+        end_event_date: end?.date || null,
+        censor_date: censorDate,
+        start_meter: start?.meter ?? parseNumber(startRow.meter_1_reading),
+        end_meter: end?.meter ?? parseNumber(endRow.meter_1_reading),
+        meter_1_type: normalizeString(inv.meter_1_type || endRow.meter_1_type),
+        start_work_order_no: clean(startRow.unique_work_order_no),
+        end_work_order_no: clean(endRow.unique_work_order_no),
+        asset_class: clean(inv.class_class_bench || inv.class_class_maint || inv.class_class_pm || inv.class_class_shop_sch),
+        department_code: clean(inv.dept_dept_code || endRow.dept_equip_dept),
+        department_name: clean(inv.department_name || endRow.dept_equip_dept_name),
+        manufacturer: clean(inv.manufacturer),
+        model: clean(inv.model),
+        asset_type: clean(inv.asset_type),
+        repair_reason_code: clean(endRow.reas_reas_for_repair),
+        repair_reason_desc: clean(endRow.reas_for_repair_desc),
+        total_cost: parseNumber(endRow.total_cost),
+        downtime_hrs_shop: parseNumber(endRow.downtime_hrs_shop),
+        labor_hours: parseNumber(endRow.labor_hours),
+        parts_cost: parseNumber(endRow.parts_cost),
+        exclusion_reason: ""
+      };
+    }
+
+    function fitWeibullMLE(intervals) {
+      const usable = intervals.filter(d => d.interval_value > 0);
+      const observed = usable.filter(d => d.event_observed);
+      const warnings = [];
+      if (observed.length < 5) return { valid: false, warnings: ["Insufficient observed repair intervals."], beta: null, eta: null };
+      if (observed.length < 15) warnings.push("Small observed-event sample; interpret beta and eta cautiously.");
+      if (usable.length < 30) warnings.push("Total interval sample is below 30.");
+      const censorRate = usable.length ? usable.filter(d => !d.event_observed).length / usable.length : 0;
+      if (censorRate > 0.8) warnings.push("High censoring rate above 80%.");
+      const values = usable.map(d => d.interval_value).sort((a, b) => a - b);
+      if (values[values.length - 1] - values[0] <= Math.max(1e-9, values[0] * 1e-6)) return { valid: false, warnings: ["Intervals are nearly identical; Weibull fit is unstable."], beta: null, eta: null };
+      const betaGuesses = [0.7, 1, 1.5, 2, 3];
+      const etaGuesses = [quantile(values, 0.5), mean(values), quantile(values, 0.75)].filter(v => v > 0);
+      let best = null;
+      for (const b of betaGuesses) for (const e of etaGuesses) {
+        const fit = optimizeWeibull(usable, Math.log(b), Math.log(e));
+        if (!best || fit.nll < best.nll) best = fit;
+      }
+      if (!best || !Number.isFinite(best.nll)) return { valid: false, warnings: ["Weibull optimization failed."], beta: null, eta: null };
+      const beta = Math.exp(best.logBeta);
+      const eta = Math.exp(best.logEta);
+      if (beta < 0.2 || beta > 10) warnings.push("Unstable beta estimate outside 0.2 to 10.");
+      return { valid: true, beta, eta, nll: best.nll, warnings };
+    }
+
+    function optimizeWeibull(intervals, logBeta, logEta) {
+      let best = { logBeta, logEta, nll: weibullNll(intervals, logBeta, logEta) };
+      let step = 1;
+      for (let iter = 0; iter < 160 && step > 1e-5; iter++) {
+        let improved = false;
+        const candidates = [
+          [best.logBeta + step, best.logEta], [best.logBeta - step, best.logEta],
+          [best.logBeta, best.logEta + step], [best.logBeta, best.logEta - step],
+          [best.logBeta + step, best.logEta + step], [best.logBeta - step, best.logEta - step]
+        ];
+        for (const [b, e] of candidates) {
+          const nll = weibullNll(intervals, b, e);
+          if (nll < best.nll) {
+            best = { logBeta: b, logEta: e, nll };
+            improved = true;
+          }
+        }
+        if (!improved) step *= 0.55;
+      }
+      return best;
+    }
+
+    function weibullNll(intervals, logBeta, logEta) {
+      const beta = Math.exp(logBeta);
+      const eta = Math.exp(logEta);
+      if (!(beta > 0) || !(eta > 0)) return Infinity;
+      let ll = 0;
+      for (const item of intervals) {
+        const t = item.interval_value;
+        if (!(t > 0)) continue;
+        const z = Math.pow(t / eta, beta);
+        const logS = -z;
+        if (item.event_observed) ll += Math.log(beta) - Math.log(eta) + (beta - 1) * (Math.log(t) - Math.log(eta)) + logS;
+        else ll += logS;
+      }
+      return -ll;
+    }
+
+    function weibullSurvival(t, beta, eta) { return Math.exp(-Math.pow(t / eta, beta)); }
+    function weibullCDF(t, beta, eta) { return 1 - weibullSurvival(t, beta, eta); }
+    function weibullPDF(t, beta, eta) { return (beta / eta) * Math.pow(t / eta, beta - 1) * weibullSurvival(t, beta, eta); }
+    function weibullHazard(t, beta, eta) { return (beta / eta) * Math.pow(t / eta, beta - 1); }
+    function calculateBxxLife(beta, eta, probability) { return eta * Math.pow(-Math.log(1 - probability), 1 / beta); }
+
+    function makeWeibullProbabilityPlotData(intervals) {
+      const observed = intervals.filter(d => d.event_observed && d.interval_value > 0).map(d => d.interval_value).sort((a, b) => a - b);
+      return observed.map((t, i) => {
+        const f = (i + 1 - 0.3) / (observed.length + 0.4);
+        return { t, x: Math.log(t), y: Math.log(-Math.log(1 - f)) };
+      });
+    }
+
+    function renderAdvancedCards(result) {
+      const unit = result.intervals.find(d => d.interval_unit)?.interval_unit || "interval";
+      const interpretation = result.fit.valid ? executiveInterpretation(result.fit.beta) : "Insufficient data";
+      const cards = [
+        ["Assets analyzed", result.inventory.length],
+        ["Repair intervals", result.stats.observed],
+        ["Weibull beta", result.fit.valid ? one(result.fit.beta) : "n/a"],
+        ["Characteristic interval / eta", result.fit.valid ? `${one(result.fit.eta)} ${unit}` : "n/a"],
+        ["Median interval", result.fit.valid ? `${one(calculateBxxLife(result.fit.beta, result.fit.eta, 0.5))} ${unit}` : result.stats.median ? `${one(result.stats.median)} ${unit}` : "n/a"],
+        ["Model interpretation", interpretation]
+      ];
+      $("advancedCards").innerHTML = cards.map(([label, value]) => `<div class="card advanced-card"><div class="label">${escapeHtml(label)}</div><div class="value">${escapeHtml(value)}</div></div>`).join("");
+    }
+
+    function renderAdvancedWarnings(result) {
+      const warnings = plainWarnings(result);
+      $("advancedWarnings").innerHTML = warnings.length
+        ? warnings.map(w => `<div>${escapeHtml(w)}</div>`).join("")
+        : "No major data warnings for the current selection.";
+    }
+
+    function renderAdvancedMeta(result) {
+      const groupText = result.filterState.viewBy !== "overall" && result.filterState.selectedGroup !== "all"
+        ? ` | Group: ${result.filterState.selectedGroup}`
+        : "";
+      $("advancedMeta").textContent = `Analysis through: ${formatDisplayDate(result.asOfDate)} | Basis: ${modeLabel(result.filterState.mode)} | Severity: ${result.filterState.repairSeverity === "major" ? "Major repairs only" : "All repairs"}${groupText}`;
+    }
+
+    function plainWarnings(result) {
+      const warnings = [];
+      result.warnings.forEach(w => {
+        if (/warranty|inventory|meter type/i.test(w)) warnings.push(w);
+      });
+      if (result.fit.valid && result.stats.observed < 15) warnings.push("This estimate is based on a small number of repair intervals.");
+      if (!result.fit.valid) warnings.push(emptyChartMessageText(result));
+      if (result.diagnostics.assetsWithFewerThanTwoQualifyingRepairs > result.inventory.length * 0.5) warnings.push("Many assets have only one repair record, so they cannot contribute repair-to-repair intervals.");
+      if (result.filterState.includePm) warnings.push("Preventative maintenance records are included as repair events.");
+      else warnings.push("Preventative maintenance records are excluded.");
+      warnings.push(result.filterState.mode === "meter" ? "This analysis estimates usage between observed repairs, not total asset life." : "This analysis estimates time between observed repairs, not total asset life.");
+      if (result.diagnostics.mixedMeterTypes) warnings.push("Usage analysis needs one meter type. Choose a meter type to continue.");
+      return [...new Set(warnings.filter(Boolean))];
+    }
+
+    function emptyChartMessage(result) {
+      return `<div class="empty">${escapeHtml(emptyChartMessageText(result))}</div>`;
+    }
+
+    function emptyChartMessageText(result) {
+      if (result.filterState.mode === "meter" && result.diagnostics.mixedMeterTypes) return "Usage analysis requires one selected meter type.";
+      if (result.filterState.mode === "meter") return "Usage analysis requires valid meter readings from at least two repair events per asset.";
+      if (result.filterState.viewBy !== "overall") return "Selected group has too few observed repair intervals. Try Overall fleet or another group.";
+      return "Not enough repair intervals to estimate Weibull parameters.";
+    }
+
+    function dataQualityLabel(stats, fit) {
+      if (!fit.valid) return "Insufficient data";
+      if (stats.observed < 15 || stats.total < 30) return "Limited sample";
+      if (stats.censorRate > 0.8) return "High censoring";
+      return "Usable";
+    }
+
+    function renderAdvancedCharts(result) {
+      void result;
+    }
+
+    function renderAdvancedDiagnostics(d) {
+      const items = [
+        ["Work orders missing usable event date", d.workOrdersMissingUsableEventDate],
+        ["PM records excluded", d.pmRecordsExcluded],
+        ["Assets with fewer than two qualifying repairs", d.assetsWithFewerThanTwoQualifyingRepairs],
+        ["Assets with no qualifying repairs", d.assetsWithNoQualifyingRepairs],
+        ["Zero or negative intervals removed", d.zeroOrNegativeIntervals],
+        ["Meter intervals removed", d.meterIntervalsMissingReadings + d.meterIntervalsNegativeDeltas],
+        ["Work orders without matching inventory asset", d.workOrdersWithoutMatchingInventory],
+        ["Final censored intervals added", d.finalCensoredIntervalsAdded]
+      ];
+      $("advancedDiagnostics").innerHTML = items.map(([label, value]) => `<div><strong>${whole(value)}</strong> ${escapeHtml(label)}</div>`).join("");
+    }
+
+    function renderAdvancedComparison(result) {
+      const compareBy = result.filterState.viewBy;
+      const card = $("weibullComparisonCard");
+      if (compareBy === "overall") {
+        card.classList.add("hidden");
+        $("weibullComparison").innerHTML = "";
+        return;
+      }
+      card.classList.remove("hidden");
+      $("weibullComparisonSub").textContent = `Weibull estimates ${viewLabel(compareBy).toLowerCase()}.`;
+      const grouped = groupBy(result.intervals, item => comparisonValue(item, compareBy));
+      const rows = [...grouped.entries()].slice(0, 25).map(([group, intervals]) => {
+        const fit = fitWeibullMLE(intervals);
+        const stats = intervalStats(intervals);
+        const unit = intervals.find(d => d.interval_unit)?.interval_unit || "";
+        const median = fit.valid ? calculateBxxLife(fit.beta, fit.eta, 0.5) : stats.median;
+        return {
+          group,
+          assets: new Set(intervals.map(d => d.eq_equip_no)).size,
+          intervals: stats.observed,
+          beta: fit.valid ? one(fit.beta) : "Insufficient data",
+          eta: fit.valid ? `${one(fit.eta)} ${unit}` : "Insufficient data",
+          median: median ? `${one(median)} ${unit}` : "n/a",
+          interpretation: fit.valid ? executiveInterpretation(fit.beta) : "Insufficient data",
+          quality: fit.valid ? dataQualityLabel(stats, fit) : "Insufficient data"
+        };
+      }).sort((a, b) => b.intervals - a.intervals);
+      if (!rows.length) {
+        $("weibullComparison").innerHTML = `<div class="empty">Selected group has too few observed repair intervals. Try Overall fleet or another group.</div>`;
+        return;
+      }
+      $("weibullComparison").innerHTML = `<table class="comparison-table"><thead><tr><th>Group</th><th>Assets</th><th>Repair intervals</th><th>Beta</th><th>Eta</th><th>Median interval</th><th>Interpretation</th><th>Data quality</th></tr></thead><tbody>${rows.map(r => `<tr data-group="${escapeAttr(r.group)}"><td>${escapeHtml(r.group)}</td><td>${r.assets}</td><td>${r.intervals}</td><td>${escapeHtml(r.beta)}</td><td>${escapeHtml(r.eta)}</td><td>${escapeHtml(r.median)}</td><td>${escapeHtml(r.interpretation)}</td><td>${escapeHtml(r.quality)}</td></tr>`).join("")}</tbody></table>`;
+      $("weibullComparison").querySelectorAll("tr[data-group]").forEach(row => {
+        row.addEventListener("click", () => {
+          state.advanced.selectedGroup = row.dataset.group;
+          $("advGroup").value = row.dataset.group;
+          renderAdvancedAnalytics();
+        });
+      });
+    }
+
+    function weibullCurveSvg(result, kind) {
+      if (!result.fit.valid) return emptyChartMessage(result);
+      const { beta, eta } = result.fit;
+      const maxT = Math.max(result.stats.max || eta * 3, eta * 2);
+      const pts = Array.from({ length: 80 }, (_, i) => {
+        const t = Math.max(maxT * i / 79, maxT / 1000);
+        const y = kind === "survival" ? weibullSurvival(t, beta, eta) : kind === "cdf" ? weibullCDF(t, beta, eta) : weibullHazard(t, beta, eta);
+        return { x: t, y };
+      });
+      return xyLineSvg(pts, kind === "hazard" ? "Hazard" : "Probability", result.intervals[0]?.interval_unit || "interval", kind === "hazard" ? v => v.toExponential(2) : v => pct(v * 100));
+    }
+
+    function histogramSvg(intervals) {
+      const values = intervals.filter(d => d.interval_value > 0).map(d => d.interval_value);
+      if (!values.length) return `<div class="empty">Not enough repair intervals to estimate Weibull parameters.</div>`;
+      const max = Math.max(...values);
+      const bins = 14;
+      const counts = Array.from({ length: bins }, () => 0);
+      values.forEach(v => counts[Math.min(bins - 1, Math.floor(v / max * bins))] += 1);
+      const data = counts.map((count, i) => ({ name: `${one(i * max / bins)}`, cost: count, assetCount: 0, workOrders: 0 }));
+      return barMiniSvg(data, "Intervals");
+    }
+
+    function probabilityPlotSvg(result) {
+      const data = makeWeibullProbabilityPlotData(result.intervals);
+      if (!data.length) return emptyChartMessage(result);
+      const fit = result.fit;
+      const line = fit.valid ? data.map(p => ({ x: p.x, y: fit.beta * p.x - fit.beta * Math.log(fit.eta) })) : [];
+      return probabilitySvg(data, line);
+    }
+
+    function xyLineSvg(points, yLabel, xLabel, yFormat) {
+      const width = 760, height = 280, pad = { l: 68, r: 24, t: 18, b: 44 };
+      const maxX = Math.max(...points.map(p => p.x), 1);
+      const maxY = Math.max(...points.map(p => p.y), 1);
+      const x = v => pad.l + (v / maxX) * (width - pad.l - pad.r);
+      const y = v => height - pad.b - (v / maxY) * (height - pad.t - pad.b);
+      const line = points.map(p => `${x(p.x)},${y(p.y)}`).join(" ");
+      return `<svg viewBox="0 0 ${width} ${height}">${grid(width, height, pad)}<line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/><line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/><text x="${width/2}" y="${height-12}" text-anchor="middle" class="axis-label">${escapeHtml(xLabel)}</text><text x="16" y="${height/2}" transform="rotate(-90 16 ${height/2})" text-anchor="middle" class="axis-label">${escapeHtml(yLabel)}</text>${ticksY(maxY, y, pad, yFormat)}<polyline points="${line}" fill="none" stroke="#0f62fe" stroke-width="2.6"/></svg>`;
+    }
+
+    function barMiniSvg(data, xLabel) {
+      const width = 760, height = 280, pad = { l: 54, r: 20, t: 16, b: 44 };
+      const max = Math.max(...data.map(d => d.cost), 1);
+      const barW = (width - pad.l - pad.r) / data.length * 0.72;
+      return `<svg viewBox="0 0 ${width} ${height}">${grid(width, height, pad)}${data.map((d, i) => {
+        const x = pad.l + i * ((width - pad.l - pad.r) / data.length);
+        const h = d.cost / max * (height - pad.t - pad.b);
+        return `<rect x="${x}" y="${height-pad.b-h}" width="${barW}" height="${h}" fill="#78aee0"><title>${escapeHtml(d.name)}: ${d.cost}</title></rect>`;
+      }).join("")}<text x="${width/2}" y="${height-12}" text-anchor="middle" class="axis-label">${escapeHtml(xLabel)}</text>${ticksY(max, v => height - pad.b - (v / max) * (height - pad.t - pad.b), pad, whole)}</svg>`;
+    }
+
+    function probabilitySvg(points, line) {
+      const width = 760, height = 280, pad = { l: 62, r: 22, t: 18, b: 44 };
+      const xs = points.concat(line).map(p => p.x);
+      const ys = points.concat(line).map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const x = v => pad.l + ((v - minX) / Math.max(1e-9, maxX - minX)) * (width - pad.l - pad.r);
+      const y = v => height - pad.b - ((v - minY) / Math.max(1e-9, maxY - minY)) * (height - pad.t - pad.b);
+      return `<svg viewBox="0 0 ${width} ${height}">${grid(width, height, pad)}<line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/><line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/><text x="${width/2}" y="${height-12}" text-anchor="middle" class="axis-label">ln(interval)</text><text x="16" y="${height/2}" transform="rotate(-90 16 ${height/2})" text-anchor="middle" class="axis-label">ln(-ln(1-F))</text>${points.map(p => `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="3" fill="#0f62fe" opacity=".55"></circle>`).join("")}${line.length ? `<polyline points="${line.map(p => `${x(p.x)},${y(p.y)}`).join(" ")}" fill="none" stroke="#da1e28" stroke-width="2"/>` : ""}</svg>`;
+    }
+
+    function normalizeString(value) { return clean(value).toUpperCase(); }
+    function normalizeAssetId(value) { return String(value ?? "").trim(); }
+    function parseNumber(value) {
+      if (value === "" || value == null) return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+
+    function parseDate(value) {
+      if (!value) return null;
+      const d = new Date(value);
+      return isNaN(d) ? null : d;
+    }
+
+    function firstValidDate(values) {
+      for (const value of values) {
+        const d = parseDate(value);
+        if (d) return d;
+      }
+      return null;
+    }
+
+    function getWorkOrderEventDate(row) {
+      return firstValidDate([
+        row.datetime_finished,
+        row.datetime_closed,
+        row.datetime_in_service,
+        row.datetime_out_service,
+        row.datetime_open,
+        row.create_date
+      ]);
+    }
+
+    function repairConfig(filterState) {
+      return {
+        repairJobTypes: new Set(["REPAIR", "R"]),
+        nonRepairJobTypes: new Set(["PM", "PREVENTATIVE MAINTENANCE", "PREVENTIVE MAINTENANCE"]),
+        includePm: !!filterState.includePm
+      };
+    }
+
+    function isRepairWorkOrder(row, config) {
+      const value = normalizeString(row.job_type);
+      if (config.repairJobTypes.has(value)) return true;
+      return config.includePm && config.nonRepairJobTypes.has(value);
+    }
+
+    function isWarrantyRepair(row) {
+      const value = normalizeString(row.warranty);
+      if (!value || ["N", "NO", "FALSE", "0", "NONE"].includes(value)) return false;
+      return true;
+    }
+
+    function passesSeverityThresholds(row, filterState) {
+      if (filterState.repairSeverity === "major") {
+        const majorByCost = (parseNumber(row.total_cost) ?? 0) >= 500;
+        const majorByDowntime = (parseNumber(row.downtime_hrs_shop) ?? 0) >= 8;
+        if (!majorByCost && !majorByDowntime) return false;
+      }
+      const tests = [
+        ["minCost", "total_cost"],
+        ["minDowntime", "downtime_hrs_shop"],
+        ["minLabor", "labor_hours"],
+        ["minParts", "parts_cost"]
+      ];
+      for (const [stateKey, field] of tests) {
+        const threshold = parseNumber(filterState[stateKey]);
+        if (threshold != null && (parseNumber(row[field]) ?? 0) < threshold) return false;
+      }
+      return true;
+    }
+
+    function usesSeverityFilters(filterState) {
+      return filterState.repairSeverity === "major" || ["minCost", "minDowntime", "minLabor", "minParts"].some(key => parseNumber(filterState[key]) != null);
+    }
+
+    function inAdvancedDateRange(row, filterState) {
+      const eventDate = getWorkOrderEventDate(row);
+      if (!eventDate) return false;
+      const start = parseDate(filterState.dateStart);
+      const end = parseDate(filterState.dateEnd);
+      if (start && eventDate < start) return false;
+      if (end && eventDate > end) return false;
+      return true;
+    }
+
+    function latestAssetActivityDate(asset, rows, monthlyRows, filterState) {
+      const candidates = rows.map(getWorkOrderEventDate).filter(Boolean);
+      for (const row of monthlyRows.filter(r => normalizeAssetId(r.eq_equip_no) === asset)) {
+        const year = num(row.cost_year);
+        const month = num(row.cost_month);
+        if (year && month) candidates.push(new Date(year, month, 0));
+      }
+      const asOf = parseDate(filterState.asOfDate);
+      if (asOf) candidates.push(asOf);
+      return candidates.length ? new Date(Math.max(...candidates.map(d => d.getTime()))) : null;
+    }
+
+    function defaultAnalysisAsOfDate() {
+      const candidates = state.merged.map(getWorkOrderEventDate).filter(Boolean);
+      for (const row of state.monthlyMerged) {
+        const year = num(row.cost_year);
+        const month = num(row.cost_month);
+        if (year && month) candidates.push(new Date(year, month, 0));
+      }
+      if (window.FLEET_APM_PRELOAD?.generated_at) candidates.push(new Date(window.FLEET_APM_PRELOAD.generated_at));
+      return candidates.length ? new Date(Math.max(...candidates.map(d => d.getTime()))) : new Date();
+    }
+
+    function formatDateInput(date) {
+      return date ? date.toISOString().slice(0, 10) : "";
+    }
+
+    function formatDisplayDate(date) {
+      if (!date) return "n/a";
+      return new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }).format(date);
+    }
+
+    function emptyDiagnostics() {
+      return {
+        workOrdersMissingUsableEventDate: 0,
+        nonRepairJobTypesExcluded: 0,
+        pmRecordsExcluded: 0,
+        assetsWithFewerThanTwoQualifyingRepairs: 0,
+        assetsWithNoQualifyingRepairs: 0,
+        zeroOrNegativeIntervals: 0,
+        meterIntervalsMissingReadings: 0,
+        meterIntervalsNegativeDeltas: 0,
+        mixedMeterTypes: 0,
+        workOrdersWithoutMatchingInventory: 0,
+        inventoryAssetsWithoutWorkOrders: 0,
+        finalCensoredIntervalsAdded: 0,
+        intervalsExcludedBySeverity: 0
+      };
+    }
+
+    function intervalStats(intervals) {
+      const values = intervals.filter(d => d.interval_value > 0).map(d => d.interval_value).sort((a, b) => a - b);
+      const total = intervals.length;
+      const observed = intervals.filter(d => d.event_observed).length;
+      const censored = total - observed;
+      return {
+        total,
+        observed,
+        censored,
+        censorRate: total ? censored / total : 0,
+        min: values[0] || 0,
+        median: values.length ? quantile(values, 0.5) : 0,
+        max: values[values.length - 1] || 0
+      };
+    }
+
+    function comparisonValue(item, compareBy) {
+      return {
+        department: item.department_name || item.department_code || "Unknown department",
+        asset_class: item.asset_class || "Unknown class",
+        manufacturer: item.manufacturer || "Unknown manufacturer",
+        model: item.model || "Unknown model",
+        meter_type: item.meter_1_type || "Unknown meter type",
+        repair_reason: item.repair_reason_desc || item.repair_reason_code || "Unknown reason",
+        asset_type: item.asset_type || "Unknown asset type"
+      }[compareBy] || "All";
+    }
+
+    function advancedGroupValue(row, viewBy) {
+      return {
+        department: clean(row.department_name || row.dept_equip_dept_name || row.dept_equip_dept) || "Unknown department",
+        asset_class: clean(row.class_class_bench || row.class_class_maint || row.class_class_pm || row.class_class_shop_sch) || "Unknown class",
+        manufacturer: clean(row.manufacturer) || "Unknown manufacturer",
+        model: clean(row.model) || "Unknown model"
+      }[viewBy] || "All";
+    }
+
+    function viewLabel(viewBy) {
+      return {
+        overall: "Overall fleet",
+        department: "By department",
+        asset_class: "By asset class",
+        manufacturer: "By manufacturer",
+        model: "By model"
+      }[viewBy] || "Overall fleet";
+    }
+
+    function modeLabel(mode) {
+      return {
+        repair: "Time between repairs",
+        meter: "Usage between repairs"
+      }[mode] || mode;
+    }
+
+    function executiveInterpretation(beta) {
+      if (beta < 0.9) return "Repairs become less likely as interval increases";
+      if (beta > 1.1) return "Repair likelihood increases as interval grows";
+      return "Repairs occur at roughly random intervals";
+    }
+
+    function betaInterpretation(beta) {
+      return executiveInterpretation(beta);
+    }
+
+    function renderAdvancedAnalytics() {
+      if (!$("weibullReliabilityChart") || !state.rawInventory.length) return;
+      const result = runWeibullRuntimeAnalysis();
+      renderWeibullWarnings(result);
+      renderWeibullReliabilityChart(result);
+      renderWeibullModelDetails(result);
+      renderWeibullQualityNotes(result.quality);
+    }
+
+    function runWeibullRuntimeAnalysis() {
+      const unit = state.advanced.intervalUnit;
+      const quality = emptyWeibullQuality();
+      const baseInventory = weibullBaseInventory();
+      const dimensionFiltered = baseInventory;
+      quality.assetsSelected = dimensionFiltered.length;
+
+      const matchingInventory = [];
+      for (const inv of dimensionFiltered) {
+        const classification = classifyMeterType(inv.meter_1_type);
+        if (classification === "unknown") {
+          quality.assetsExcludedUnknownMeter += 1;
+          continue;
+        }
+        if (classification !== unit) {
+          quality.assetsExcludedUnitMismatch += 1;
+          continue;
+        }
+        matchingInventory.push(inv);
+      }
+
+      const selectedAssets = new Set(matchingInventory.map(r => normalizeAssetId(r.eq_equip_no)).filter(Boolean));
+      const maintenance = filterRows(state.merged, "date").filter(row => selectedAssets.has(normalizeAssetId(row.eq_equip_no)));
+      const byAsset = groupBy(maintenance, row => normalizeAssetId(row.eq_equip_no));
+      const inventoryByAsset = new Map(matchingInventory.map(row => [normalizeAssetId(row.eq_equip_no), row]));
+      const intervals = [];
+      const usedWorkOrders = new Set();
+      const qualifyingRepairEvents = [];
+
+      for (const inv of matchingInventory) {
+        const asset = normalizeAssetId(inv.eq_equip_no);
+        const rows = byAsset.get(asset) || [];
+        const repairEvents = [];
+
+        for (const row of rows) {
+          if (!isRepairWorkOrder(row)) {
+            quality.workOrdersExcludedNonRepair += 1;
+            continue;
+          }
+          const date = getRepairEventDate(row);
+          if (!date) {
+            quality.workOrdersExcludedMissingDate += 1;
+            continue;
+          }
+          const meter = repairMeterReading(row);
+          if (!(meter > 0)) {
+            quality.workOrdersExcludedMissingMeter += 1;
+            continue;
+          }
+          if (!passesWeibullSeverity(row)) continue;
+          repairEvents.push({ row, date, meter });
+          qualifyingRepairEvents.push({ row, date, meter });
+          usedWorkOrders.add(clean(row.unique_work_order_no));
+        }
+
+        repairEvents.sort((a, b) => a.date - b.date || a.meter - b.meter);
+        if (!repairEvents.length) quality.assetsWithNoQualifyingRepairs += 1;
+        else if (repairEvents.length === 1) quality.assetsWithOneQualifyingRepair += 1;
+
+        for (let i = 1; i < repairEvents.length; i++) {
+          const previous = repairEvents[i - 1];
+          const current = repairEvents[i];
+          const interval = current.meter - previous.meter;
+          if (interval === 0) {
+            quality.intervalsExcludedZero += 1;
+            continue;
+          }
+          if (interval < 0) {
+            quality.intervalsExcludedNegative += 1;
+            continue;
+          }
+          if (!Number.isFinite(interval)) {
+            quality.workOrdersExcludedMissingMeter += 1;
+            continue;
+          }
+          intervals.push(makeRuntimeInterval(asset, unit, interval, previous, current, inventoryByAsset.get(asset) || inv));
+        }
+      }
+
+      const fit = fitWeibullMLE(intervals);
+      const stats = runtimeIntervalStats(intervals);
+      const warnings = weibullWarnings(intervals, fit, quality);
+      quality.intervalsExcluded = quality.intervalsExcludedZero + quality.intervalsExcludedNegative + quality.workOrdersExcludedMissingMeter;
+      return {
+        unit,
+        unitLabel: runtimeUnitLabel(unit),
+        axisLabel: unit === "hours" ? "Hours between repairs" : "Miles between repairs",
+        inventory: matchingInventory,
+        maintenance,
+        intervals,
+        fit,
+        stats,
+        quality,
+        warnings,
+        repairWorkOrdersUsed: usedWorkOrders.size,
+        repairEventsUsed: qualifyingRepairEvents.length,
+        assetsAnalyzed: new Set(intervals.map(d => d.eq_equip_no)).size
+      };
+    }
+
+    function weibullBaseInventory() {
+      const globallyVisibleAssets = new Set(filterRows(state.merged, "date").map(r => normalizeAssetId(r.eq_equip_no)).filter(Boolean));
+      return state.rawInventory
+        .map(row => normalizeMerged(row))
+        .filter(row => globallyVisibleAssets.has(normalizeAssetId(row.eq_equip_no)));
+    }
+
+    function classifyMeterType(meterType) {
+      const value = String(meterType ?? "").trim().toUpperCase();
+      if (value.includes("MILE") || value.includes("ODOMETER") || value.includes("HUB") || value.includes("HUBO")) return "miles";
+      if (value.includes("HOUR") || value.includes("HR") || value.includes("ENGINE")) return "hours";
+      return "unknown";
+    }
+
+    function isRepairWorkOrder(row, config = null) {
+      const value = String(row.job_type ?? "").trim().toUpperCase();
+      if (config) {
+        if (config.repairJobTypes?.has(value)) return true;
+        return !!config.includePm && !!config.nonRepairJobTypes?.has(value);
+      }
+      return value === "REPAIR" || value === "R";
+    }
+
+    function getRepairEventDate(row) {
+      return firstValidDate([
+        row.datetime_finished,
+        row.datetime_closed,
+        row.datetime_in_service,
+        row.datetime_out_service,
+        row.datetime_open,
+        row.create_date
+      ]);
+    }
+
+    function repairMeterReading(row) {
+      return parseNumber(row.meter_1_reading) ?? parseNumber(row.meter_1_life_total);
+    }
+
+    function passesWeibullSeverity(row) {
+      if (state.advanced.severity !== "major") return true;
+      return (parseNumber(row.total_cost) ?? 0) >= 500 || (parseNumber(row.downtime_hrs_shop) ?? 0) >= 8;
+    }
+
+    function makeRuntimeInterval(asset, unit, interval, previous, current, inv) {
+      const currentRow = current.row || {};
+      const previousRow = previous.row || {};
+      return {
+        eq_equip_no: asset,
+        runtime_basis: unit,
+        interval_value: interval,
+        interval_unit: runtimeUnitLabel(unit),
+        event_observed: 1,
+        start_repair_date: previous.date,
+        end_repair_date: current.date,
+        start_meter: previous.meter,
+        end_meter: current.meter,
+        start_work_order_no: clean(previousRow.unique_work_order_no),
+        end_work_order_no: clean(currentRow.unique_work_order_no),
+        asset_class: assetClassValue(inv),
+        department_name: clean(inv.department_name || currentRow.dept_equip_dept_name),
+        dept_dept_code: clean(inv.dept_dept_code || currentRow.dept_equip_dept),
+        manufacturer: clean(inv.manufacturer),
+        model: clean(inv.model),
+        year: assetYearValue(inv),
+        job_type: clean(currentRow.job_type),
+        repair_reason_code: clean(currentRow.reas_reas_for_repair),
+        repair_reason_description: clean(currentRow.reas_for_repair_desc),
+        total_cost: parseNumber(currentRow.total_cost),
+        downtime_hrs_shop: parseNumber(currentRow.downtime_hrs_shop),
+        labor_hours: parseNumber(currentRow.labor_hours),
+        parts_cost: parseNumber(currentRow.parts_cost)
+      };
+    }
+
+    function runtimeIntervalStats(intervals) {
+      const values = intervals.map(d => d.interval_value).filter(v => v > 0).sort((a, b) => a - b);
+      const avg = mean(values);
+      const variance = values.length > 1 ? values.reduce((sum, v) => sum + Math.pow(v - avg, 2), 0) / (values.length - 1) : 0;
+      return {
+        total: values.length,
+        mean: avg,
+        median: values.length ? quantile(values, 0.5) : 0,
+        stddev: Math.sqrt(variance),
+        min: values[0] || 0,
+        max: values[values.length - 1] || 0,
+        p95: values.length ? quantile(values, 0.95) : 0
+      };
+    }
+
+    function emptyWeibullQuality() {
+      return {
+        assetsSelected: 0,
+        assetsExcludedUnknownMeter: 0,
+        assetsExcludedUnitMismatch: 0,
+        workOrdersExcludedNonRepair: 0,
+        workOrdersExcludedMissingDate: 0,
+        workOrdersExcludedMissingMeter: 0,
+        intervalsExcludedZero: 0,
+        intervalsExcludedNegative: 0,
+        intervalsExcluded: 0,
+        assetsWithOneQualifyingRepair: 0,
+        assetsWithNoQualifyingRepairs: 0
+      };
+    }
+
+    function weibullWarnings(intervals, fit, quality) {
+      const warnings = [];
+      if (intervals.length < 5) warnings.push("Not enough valid repair intervals to estimate a Weibull curve for this selection.");
+      else if (intervals.length < 15) warnings.push("Strong small-sample warning: this model uses fewer than 15 valid repair intervals.");
+      else if (intervals.length < 30) warnings.push("Moderate small-sample warning: this model uses fewer than 30 valid repair intervals.");
+      if (fit.valid && (fit.beta < 0.2 || fit.beta > 10)) warnings.push("The fitted beta is outside the stable range, so treat this estimate cautiously.");
+      if (!fit.valid && fit.warnings?.some(w => /identical/i.test(w))) warnings.push("The repair intervals are nearly identical, so the Weibull fit is unstable.");
+      if (quality.assetsExcludedUnknownMeter) warnings.push(`Data note: ${whole(quality.assetsExcludedUnknownMeter)} assets skipped for unknown meter type.`);
+      if (quality.assetsExcludedUnitMismatch) warnings.push(`Data note: ${whole(quality.assetsExcludedUnitMismatch)} assets skipped because they use the other interval unit.`);
+      return [...new Set(warnings)];
+    }
+
+    function renderWeibullWarnings(result) {
+      $("advancedWarnings").innerHTML = result.warnings.length
+        ? result.warnings.map(w => `<div>${escapeHtml(w)}</div>`).join("")
+        : `Model fitted using ${whole(result.intervals.length)} valid ${escapeHtml(result.unitLabel)} repair intervals.`;
+    }
+
+    function renderWeibullReliabilityChart(result) {
+      $("weibullChartSub").textContent = `${result.axisLabel} on the x-axis; probability of no repair on the y-axis.`;
+      if (!result.fit.valid) {
+        $("weibullReliabilityChart").innerHTML = `<div class="empty">Not enough valid repair intervals to estimate a Weibull curve for this selection.</div>`;
+        return;
+      }
+      $("weibullReliabilityChart").innerHTML = weibullReliabilitySvg(result);
+    }
+
+    function weibullReliabilitySvg(result) {
+      const width = 900, height = 370, pad = { l: 78, r: 30, t: 24, b: 62 };
+      const { beta, eta } = result.fit;
+      const maxX = Math.max(result.stats.total < 30 ? result.stats.max : result.stats.p95, eta, 1);
+      const x = v => pad.l + (v / maxX) * (width - pad.l - pad.r);
+      const y = v => height - pad.b - (v / 1) * (height - pad.t - pad.b);
+      const points = Array.from({ length: 90 }, (_, i) => {
+        const t = maxX * i / 89;
+        return { t, r: weibullSurvival(t, beta, eta) };
+      });
+      const line = points.map(p => `${x(p.t)},${y(p.r)}`).join(" ");
+      const rug = result.intervals.slice(0, 400).map(item => {
+        const px = x(Math.min(item.interval_value, maxX));
+        return `<line x1="${px}" y1="${height - pad.b + 4}" x2="${px}" y2="${height - pad.b + 17}" stroke="#78aee0" opacity=".28"><title>Observed interval: ${whole(item.interval_value)} ${escapeHtml(result.unitLabel)}</title></line>`;
+      }).join("");
+      const hoverPoints = points.map(p => {
+        const reliability = weibullSurvival(p.t, beta, eta);
+        return `<circle cx="${x(p.t)}" cy="${y(p.r)}" r="5" fill="#0f62fe" opacity=".02"><title>Interval: ${whole(p.t)} ${escapeHtml(result.unitLabel)}\nReliability: ${reliability.toFixed(2)}\nBeta: ${one(beta)}\nTheta: ${whole(eta)} ${escapeHtml(result.unitLabel)}</title></circle>`;
+      }).join("");
+      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Weibull reliability curve">${grid(width, height, pad)}<line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/><line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/><text x="${width/2}" y="${height-18}" text-anchor="middle" class="axis-label">${escapeHtml(result.axisLabel)}</text><text x="16" y="${height/2}" transform="rotate(-90 16 ${height/2})" text-anchor="middle" class="axis-label">Probability of no repair</text>${ticksX(maxX, x, height, pad, whole)}${ticksY(1, y, pad, v => v.toFixed(1))}<polyline points="${line}" fill="none" stroke="#0f62fe" stroke-width="3"/>${rug}${hoverPoints}</svg>`;
+    }
+
+    function renderWeibullModelDetails(result) {
+      const fit = result.fit;
+      const unit = result.unitLabel;
+      const theta = fit.valid ? fit.eta : 0;
+      const primaryRows = [
+        ["Distribution", "Two-parameter Weibull"],
+        ["Runtime basis", titleCase(unit)],
+        ["Number of assets analyzed", whole(result.assetsAnalyzed)],
+        ["Number of valid repair intervals", whole(result.intervals.length)],
+        ["Mean repair interval", result.stats.total ? `${whole(result.stats.mean)} ${unit}` : "n/a"],
+        ["Median repair interval", result.stats.total ? `${whole(result.stats.median)} ${unit}` : "n/a"],
+        ["Weibull beta", fit.valid ? one(fit.beta) : "n/a"],
+        ["Weibull theta", fit.valid ? `${whole(theta)} ${unit}` : "n/a"],
+        ["B10 interval", fit.valid ? `${whole(calculateBxxLife(fit.beta, theta, 0.10))} ${unit}` : "n/a"],
+        ["B50 interval", fit.valid ? `${whole(calculateBxxLife(fit.beta, theta, 0.50))} ${unit}` : "n/a"],
+        ["B90 interval", fit.valid ? `${whole(calculateBxxLife(fit.beta, theta, 0.90))} ${unit}` : "n/a"],
+        ["Hazard interpretation", fit.valid ? weibullHazardInterpretation(fit.beta) : "n/a"]
+      ];
+      const secondaryRows = [
+        ["Fit method", "Maximum likelihood estimation"],
+        ["Number of repair work orders used", whole(result.repairWorkOrdersUsed)],
+        ["Number of intervals excluded", whole(result.quality.intervalsExcluded)],
+        ["Standard deviation of repair intervals", result.stats.total ? `${whole(result.stats.stddev)} ${unit}` : "n/a"],
+        ["Minimum repair interval", result.stats.total ? `${whole(result.stats.min)} ${unit}` : "n/a"],
+        ["Maximum repair interval", result.stats.total ? `${whole(result.stats.max)} ${unit}` : "n/a"],
+        ["Characteristic interval", fit.valid ? `${whole(theta)} ${unit}. About 63.2% of repair intervals are expected to end before theta.` : "n/a"]
+      ];
+      const reliability = fit.valid ? reliabilityCheckpoints(result).map(item => `<div class="reliability-pill"><span>R(${whole(item.t)} ${escapeHtml(unit)})</span><strong>${item.r.toFixed(2)}</strong><span>Repair probability: ${(1 - item.r).toFixed(2)}</span></div>`).join("") : "";
+      $("weibullModelDetails").innerHTML = `
+        <table class="model-details-table"><tbody>${primaryRows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join("")}</tbody></table>
+        <details class="model-more"><summary>See more</summary><table class="model-details-table"><tbody>${secondaryRows.map(([k, v]) => `<tr><th>${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join("")}</tbody></table></details>
+        ${reliability ? `<div class="reliability-pills">${reliability}</div>` : ""}
+      `;
+    }
+
+    function renderWeibullQualityNotes(q) {
+      const items = [
+        ["Assets selected", q.assetsSelected],
+        ["Assets excluded because meter type was unknown", q.assetsExcludedUnknownMeter],
+        ["Assets excluded because meter type did not match selected Interval unit", q.assetsExcludedUnitMismatch],
+        ["Work orders excluded because they were PM/non-repair", q.workOrdersExcludedNonRepair],
+        ["Work orders excluded because event date was missing", q.workOrdersExcludedMissingDate],
+        ["Work orders excluded because meter reading was missing", q.workOrdersExcludedMissingMeter],
+        ["Intervals excluded because interval was zero", q.intervalsExcludedZero],
+        ["Intervals excluded because interval was negative", q.intervalsExcludedNegative],
+        ["Assets with only one qualifying repair", q.assetsWithOneQualifyingRepair],
+        ["Assets with no qualifying repairs", q.assetsWithNoQualifyingRepairs]
+      ];
+      $("weibullQualityNotes").innerHTML = items.map(([label, value]) => `<div><strong>${whole(value)}</strong> ${escapeHtml(label)}</div>`).join("");
+    }
+
+    function reliabilityCheckpoints(result) {
+      const unit = result.unit;
+      const candidates = unit === "hours" ? [100, 500, 1000] : [1000, 5000, 10000];
+      const maxInterval = Math.max(result.stats.max, result.fit.eta);
+      const fallback = [0.25, 0.5, 0.75].map(p => Math.max(1, Math.round(maxInterval * p)));
+      const selected = candidates.some(v => v <= maxInterval * 1.5) ? candidates : fallback;
+      return selected.map(t => ({ t, r: weibullSurvival(t, result.fit.beta, result.fit.eta) }));
+    }
+
+    function weibullHazardInterpretation(beta) {
+      if (beta < 0.9) return "Repair risk decreases as runtime since prior repair increases. This may indicate early repeat repairs or unresolved prior repair issues.";
+      if (beta <= 1.1) return "Repair risk is approximately constant. Repairs appear to occur randomly with respect to runtime interval.";
+      return "Repair risk increases as runtime since prior repair increases. This may indicate wear-out behavior.";
+    }
+
+    function assetClassValue(row) {
+      return clean(row.class_class_bench || row.class_class_maint || row.class_class_pm || row.class_class_shop_sch) || "Unclassified";
+    }
+
+    function assetYearValue(row) {
+      return clean(row.year) || "Unknown year";
+    }
+
+    function departmentValue(row) {
+      return clean(row.department_name || row.dept_dept_code || row.dept_equip_dept_name || row.dept_equip_dept) || "Unknown department";
+    }
+
+    function runtimeUnitLabel(unit) {
+      return unit === "hours" ? "hours" : "miles";
+    }
+
+    function titleCase(value) {
+      return clean(value).replace(/\b\w/g, ch => ch.toUpperCase());
+    }
+
+    function unique(values) {
+      return [...new Set(values)];
+    }
+
+    function mean(values) {
+      return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+    }
+
+    function quantile(sortedValues, p) {
+      if (!sortedValues.length) return 0;
+      const sorted = [...sortedValues].sort((a, b) => a - b);
+      const idx = (sorted.length - 1) * p;
+      const lo = Math.floor(idx);
+      const hi = Math.ceil(idx);
+      if (lo === hi) return sorted[lo];
+      return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+    }
+
+    function scatterSvg(points, xLabel, yLabel) {
+      if (!points.length) return `<div class="empty">No repair records match the current filters.</div>`;
+      const width = 820, height = 330, pad = { l: 78, r: 24, t: 18, b: 56 };
+      const maxX = Math.max(...points.map(p => p.x), 1);
+      const maxY = Math.max(...points.map(p => p.y), 1);
+      const x = v => pad.l + (v / maxX) * (width - pad.l - pad.r);
+      const y = v => height - pad.b - (v / maxY) * (height - pad.t - pad.b);
+      const groups = [...new Set(points.map(p => p.group))].sort();
+      const palette = ["#0f62fe", "#198038", "#8a3ffc", "#ff832b", "#007d79", "#da1e28", "#1192e8", "#6f6f6f", "#a56eff", "#b28600"];
+      const color = group => palette[Math.max(0, groups.indexOf(group)) % palette.length];
+      return `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${yLabel} by ${xLabel}">
+          ${grid(width, height, pad)}
+          <line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          ${axisLabels(width, height, pad, xLabel, yLabel)}
+          ${points.map(p => `<circle cx="${x(p.x)}" cy="${y(p.y)}" r="${Math.max(4, Math.min(13, 4 + p.y / maxY * 9))}" fill="${color(p.group)}" opacity=".30"><title>Description: ${escapeHtml(p.description || "n/a")}\nAsset ID: ${escapeHtml(p.asset)}\nTotal repair cost: ${money(p.x)}\nNumber of repairs: ${whole(p.y)}</title></circle>`).join("")}
+          ${ticksX(maxX, x, height, pad, money)}
+          ${ticksY(maxY, y, pad, whole)}
+        </svg>
+        <div class="legend manufacturer-legend">${groups.map(g => `<span><i class="dot" style="background:${color(g)}"></i>${escapeHtml(g)}</span>`).join("")}</div>`;
+    }
+
+    function reasonBarsSvg(items) {
+      if (!items.length) return `<div class="empty">No reason-for-repair records match the current filters.</div>`;
+      const width = 820, height = 330, pad = { l: 176, r: 32, t: 12, b: 38 };
+      const max = Math.max(...items.map(i => i.cost), 1);
+      const barH = Math.max(7, Math.min(22, (height - pad.t - pad.b) / items.length - 3));
+      return `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Reason for repair cost bars">
+          ${items.map((d, i) => {
+            const y = pad.t + i * (barH + 3);
+            const w = (d.cost / max) * (width - pad.l - pad.r);
+            return `<g>
+              <text x="${pad.l - 8}" y="${y + barH - 4}" text-anchor="end" class="bar-label">${escapeHtml(shorten(d.reason, 24))}</text>
+              <rect x="${pad.l}" y="${y}" width="${w}" height="${barH}" fill="#78aee0"></rect>
+              <text x="${pad.l + w + 6}" y="${y + barH - 4}" class="bar-value">${money(d.cost)}</text>
+              <title>${escapeHtml(d.reason)}\nCost: ${money(d.cost)}\nRepairs: ${d.count}</title>
+            </g>`;
+          }).join("")}
+        </svg>`;
+    }
+
+    function paretoSvg(data, levelLabel) {
+      if (!data.length) return `<div class="empty">No cost data match the current filters.</div>`;
+      const width = 1180, height = 620, pad = { l: 82, r: 32, t: 24, b: 142 };
+      const max = Math.max(...data.map(d => d.cost), 1);
+      const chartW = width - pad.l - pad.r;
+      const barW = Math.max(10, Math.min(42, chartW / data.length * .68));
+      const gap = (chartW - barW * data.length) / Math.max(1, data.length - 1);
+      const y = v => height - pad.b - (v / max) * (height - pad.t - pad.b);
+      const bars = data.map((d, i) => {
+        const x = pad.l + i * (barW + gap);
+        const h = height - pad.b - y(d.cost);
+        const selected = d.name === state.selectedParetoName;
+        return `<g class="pareto-bar" data-name="${escapeAttr(d.name)}" style="cursor:pointer">
+          <rect x="${x}" y="${y(d.cost)}" width="${barW}" height="${h}" fill="${selected ? "#0f62fe" : "#78aee0"}" opacity="${selected ? "1" : ".86"}"></rect>
+          <text x="${x + barW / 2}" y="${height - pad.b + 14}" text-anchor="start" transform="rotate(65 ${x + barW / 2} ${height - pad.b + 14})" class="bar-label">${escapeHtml(shorten(d.name, 18))}</text>
+          <title>${escapeHtml(d.name)}\nTotal cost: ${money(d.cost)}\nAssets: ${d.assetCount}\nWork orders: ${d.workOrders}</title>
+        </g>`;
+      }).join("");
+      const html = `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Total cost by ${escapeHtml(levelLabel)}">
+          ${grid(width, height, pad)}
+          <line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          <text x="${width/2}" y="${height-18}" text-anchor="middle" class="axis-label">${escapeHtml(levelLabel)}</text>
+          <text x="18" y="${height/2}" transform="rotate(-90 18 ${height/2})" text-anchor="middle" class="axis-label">Total Cost</text>
+          ${ticksY(max, y, pad, money)}
+          ${bars}
+        </svg>`;
+      queueMicrotask(() => {
+        document.querySelectorAll(".pareto-bar").forEach(g => {
+          g.addEventListener("click", () => {
+            state.selectedParetoName = g.dataset.name;
+            render();
+          });
+          g.addEventListener("dblclick", () => {
+            state.selectedParetoName = g.dataset.name;
+            drillDown();
+          });
+        });
+      });
+      return html;
+    }
+
+    function lineSvg(data, series) {
+      if (!data.length) return `<div class="empty">No monthly costs match the current filters.</div>`;
+      const width = 1180, height = 560, pad = { l: 82, r: 28, t: 20, b: 62 };
+      const maxY = Math.max(...data.flatMap(d => series.map(s => d[s])), 1);
+      const x = i => pad.l + (i / Math.max(1, data.length - 1)) * (width - pad.l - pad.r);
+      const y = v => height - pad.b - (v / maxY) * (height - pad.t - pad.b);
+      const lines = series.map(s => {
+        const pts = data.map((d, i) => `${x(i)},${y(d[s])}`).join(" ");
+        return `<polyline points="${pts}" fill="none" stroke="${costColors[s]}" stroke-width="2.5"><title>${labelCostField(s)}</title></polyline>`;
+      }).join("");
+      const dots = series.map(s => data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d[s])}" r="3" fill="${costColors[s]}"><title>${labelCostField(s)}\n${d.month}: ${money(d[s])}</title></circle>`).join("")).join("");
+      return `
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Monthly cost trend">
+          ${grid(width, height, pad)}
+          <line x1="${pad.l}" y1="${height-pad.b}" x2="${width-pad.r}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          <line x1="${pad.l}" y1="${pad.t}" x2="${pad.l}" y2="${height-pad.b}" stroke="#a8a8a8"/>
+          <text x="${width/2}" y="${height-18}" text-anchor="middle" class="axis-label">Time</text>
+          <text x="18" y="${height/2}" transform="rotate(-90 18 ${height/2})" text-anchor="middle" class="axis-label">Cost</text>
+          ${ticksY(maxY, y, pad, money)}
+          ${data.map((d, i) => i % Math.ceil(data.length / 10) === 0 ? `<text x="${x(i)}" y="${height-pad.b+18}" text-anchor="middle" class="bar-label">${d.month}</text>` : "").join("")}
+          ${lines}${dots}
+        </svg>
+        <div class="legend">${series.map(s => `<span><i class="dot" style="background:${costColors[s]}"></i>${labelCostField(s)}</span>`).join("")}</div>`;
+    }
+
+    function labelCostField(field) {
+      return {
+        total_cost: "Total Cost",
+        fuel_cost: "Fuel",
+        cng_cost: "CNG",
+        oil_cost: "Oil",
+        misc_cost: "Misc.",
+        repair_labor_cost: "Repair labor",
+        repair_parts_cost: "Repair parts",
+        pm_labor_cost: "PM labor",
+        pm_parts_cost: "PM parts"
+      }[field] || field;
+    }
+
+    function grid(width, height, pad) {
+      const lines = [];
+      for (let i = 0; i <= 5; i++) {
+        const y = pad.t + i * (height - pad.t - pad.b) / 5;
+        lines.push(`<line x1="${pad.l}" y1="${y}" x2="${width-pad.r}" y2="${y}" stroke="#e8e8e8"/>`);
+      }
+      return lines.join("");
+    }
+
+    function axisLabels(width, height, pad, xLabel, yLabel) {
+      return `
+        <text x="${width/2}" y="${height-16}" text-anchor="middle" class="axis-label">${xLabel}</text>
+        <text x="18" y="${height/2}" transform="rotate(-90 18 ${height/2})" text-anchor="middle" class="axis-label">${yLabel}</text>
+      `;
+    }
+
+    function ticksX(maxX, x, height, pad, format) {
+      return [0, .25, .5, .75, 1].map(t => {
+        const v = maxX * t;
+        return `<text x="${x(v)}" y="${height-pad.b+18}" text-anchor="middle" class="bar-label">${format(v)}</text>`;
+      }).join("");
+    }
+
+    function ticksY(maxY, y, pad, format) {
+      return [0, .2, .4, .6, .8, 1].map(t => {
+        const v = maxY * t;
+        return `<text x="${pad.l-8}" y="${y(v)+4}" text-anchor="end" class="bar-label">${format(v)}</text>`;
+      }).join("");
+    }
+
+    function groupBy(rows, fn) {
+      const map = new Map();
+      for (const row of rows) {
+        const key = fn(row);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(row);
+      }
+      return map;
+    }
+
+    function sum(rows, fn) {
+      return rows.reduce((acc, row) => acc + fn(row), 0);
+    }
+
+    function sumUniqueAssets(rows, fn) {
+      const seen = new Set();
+      let total = 0;
+      for (const row of rows) {
+        if (!row.eq_equip_no || seen.has(row.eq_equip_no)) continue;
+        seen.add(row.eq_equip_no);
+        total += fn(row);
+      }
+      return total;
+    }
+
+    function shorten(text, len) {
+      text = clean(text);
+      return text.length > len ? `${text.slice(0, len - 1)}...` : text;
+    }
+
+    function setStatus(text) {
+      $("status").textContent = text;
+    }
+
+    function escapeHtml(value) {
+      return clean(value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, "&#96;");
+    }
+
+    init();
+  </script>
+</body>
+</html>
